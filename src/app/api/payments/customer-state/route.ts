@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getCustomerState } from "~/api/payments/service";
 import { getCurrentUser } from "~/lib/auth";
+import { getCustomerState } from "~/lib/api/payments";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const customerState = await getCustomerState(user.id);
-    
+
     if (!customerState) {
       return new NextResponse(
         JSON.stringify({ error: "Customer not found" }),

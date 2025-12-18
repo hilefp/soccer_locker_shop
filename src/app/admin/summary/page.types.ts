@@ -1,8 +1,7 @@
-import type { MediaUpload } from "~/db/schema/uploads/types";
-import type { User } from "~/db/schema/users/types";
+import type { Upload, User } from "~/lib/api/types";
 
 // The shape of the data expected by the table
 // Includes user details and their uploads
 export type UserWithUploads = User & {
-  uploads: MediaUpload[];
+  uploads: Upload[];
 };

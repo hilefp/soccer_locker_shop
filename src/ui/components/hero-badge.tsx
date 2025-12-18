@@ -1,9 +1,27 @@
 import Link from "next/link";
 
 import { SEO_CONFIG, SYSTEM_CONFIG } from "~/app";
-import { getGithubStars } from "~/lib/queries/github";
 
 import { GitHubIcon } from "./icons/github";
+
+async function getGithubStars(): Promise<number | null> {
+  if (!SYSTEM_CONFIG.repoStars) return null;
+
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${SYSTEM_CONFIG.repoOwner}/${SYSTEM_CONFIG.repoName}`,
+      { next: { revalidate: 3600 } } // Cache for 1 hour
+    );
+
+    if (!response.ok) return null;
+
+    const data = await response.json() as { stargazers_count?: number };
+    return data.stargazers_count ?? null;
+  } catch (error) {
+    console.error("Failed to fetch GitHub stars:", error);
+    return null;
+  }
+}
 
 export async function HeroBadge() {
   const githubStars = await getGithubStars();

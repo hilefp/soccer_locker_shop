@@ -2,9 +2,8 @@ import { createId } from "@paralleldrive/cuid2";
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
 
-import { db } from "~/db";
-import { uploadsTable } from "~/db/schema";
-import { auth } from "~/lib/auth";
+import { getCurrentUser } from "~/lib/auth";
+import { createUpload } from "~/lib/api/uploads";
 
 const f = createUploadthing();
 // FileRouter for the app, can contain multiple FileRoutes
@@ -24,15 +23,15 @@ export const ourFileRouter = {
     // Set permissions and file types for this FileRoute
     .middleware(async ({ req }) => {
       // This code runs on your server before upload
-      // Get the user session using auth.api.getSession
-      const session = await auth.api.getSession({ headers: req.headers });
+      // Get the user session
+      const user = await getCurrentUser();
 
       // If you throw, the user will not be able to upload
-      if (!session?.user?.id) throw new UploadThingError("Unauthorized");
+      if (!user?.id) throw new UploadThingError("Unauthorized");
 
       // Whatever is returned here is accessible in onUploadComplete as `metadata`
       // Ensure userId is correctly passed
-      return { userId: session.user.id };
+      return { userId: user.id };
     })
     .onUploadComplete(async ({ file, metadata }) => {
       // This code RUNS ON THE SERVER after upload
@@ -40,25 +39,24 @@ export const ourFileRouter = {
       console.log("file url", file.ufsUrl); // Public CDN URL is useful info
       console.log("file key", file.key);
 
-      // Save the upload details to the database
+      // Save the upload details to external API
       try {
-        await db.insert(uploadsTable).values({
-          id: createId(),
+        await createUpload({
           key: file.key,
           type: "image",
           url: file.ufsUrl, // Store the public CDN URL
           userId: metadata.userId,
         });
         console.log(
-          "Saved image upload details to database for userId:",
+          "Saved image upload details to external API for userId:",
           metadata.userId,
         );
       } catch (error) {
         console.error(
-          "Failed to save image upload details to database:",
+          "Failed to save image upload details to external API:",
           error,
         );
-        // Optionally, you might want to delete the file from UploadThing if DB insert fails
+        // Optionally, you might want to delete the file from UploadThing if API insert fails
         // await utapi.deleteFiles(file.key);
         throw new UploadThingError("Failed to process upload metadata.");
       }
@@ -78,31 +76,30 @@ export const ourFileRouter = {
   })
     .middleware(async ({ req }) => {
       // Same middleware logic as imageUploader
-      const session = await auth.api.getSession({ headers: req.headers });
-      if (!session?.user?.id) throw new UploadThingError("Unauthorized");
-      return { userId: session.user.id };
+      const user = await getCurrentUser();
+      if (!user?.id) throw new UploadThingError("Unauthorized");
+      return { userId: user.id };
     })
     .onUploadComplete(async ({ file, metadata }) => {
       console.log("Upload complete for userId (video):", metadata.userId);
       console.log("file url", file.ufsUrl); // Public CDN URL is useful info
       console.log("file key", file.key);
 
-      // Save the upload details to the database
+      // Save the upload details to external API
       try {
-        await db.insert(uploadsTable).values({
-          id: createId(),
+        await createUpload({
           key: file.key,
           type: "video", // Explicitly set type to video
           url: file.ufsUrl,
           userId: metadata.userId,
         });
         console.log(
-          "Saved video upload details to database for userId:",
+          "Saved video upload details to external API for userId:",
           metadata.userId,
         );
       } catch (error) {
         console.error(
-          "Failed to save video upload details to database:",
+          "Failed to save video upload details to external API:",
           error,
         );
         throw new UploadThingError("Failed to process upload metadata.");

@@ -6,7 +6,7 @@ import type React from "react";
 import { Hash, Mail, User as UserIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
-import type { MediaUpload } from "~/db/schema/uploads/types";
+import type { Upload } from "~/lib/api/types";
 import type { GalleryMediaItem } from "~/ui/components/blocks/bento-media-gallery";
 
 import { ADMIN_CONFIG } from "~/app";
@@ -33,7 +33,7 @@ const AdminPageClient: React.FC<AdminPageClientProps> = ({ initialData }) => {
   const handleMediaClick = useCallback(
     (item: GalleryMediaItem) => {
       const allUploads = initialData.flatMap((user) =>
-        user.uploads.map((upload: MediaUpload) => ({
+        user.uploads.map((upload: Upload) => ({
           desc: `Uploaded by ${user.name || "Unknown"} on ${new Date(upload.createdAt).toLocaleDateString()}`,
           id: upload.id,
           span: "md:col-span-1 md:row-span-2 sm:col-span-1 sm:row-span-2", // Default span value
@@ -101,7 +101,7 @@ const AdminPageClient: React.FC<AdminPageClientProps> = ({ initialData }) => {
 
           return (
             <div className="flex flex-wrap gap-2">
-              {uploads.map((upload: MediaUpload) => {
+              {uploads.map((upload: Upload) => {
                 const galleryItem: GalleryMediaItem = {
                   desc: `Uploaded by ${user.name || "Unknown"} on ${new Date(upload.createdAt).toLocaleDateString()}`,
                   id: upload.id,

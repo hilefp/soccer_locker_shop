@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React from "react";
 
-import type { User } from "~/db/schema/users/types";
+import type { User } from "~/lib/api/types";
 
 import { signOut, useCurrentUser } from "~/lib/auth-client";
 import { Button } from "~/ui/primitives/button";

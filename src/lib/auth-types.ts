@@ -1,6 +1,15 @@
-import type { User as UserDbInfer } from "~/db/schema/users/types";
+// Authentication types - now using API types instead of database types
 
-export type UserDbType = UserDbInfer;
+import type { JWTPayload, Session, User } from "~/lib/api/types";
 
-// import type { User as UserRawInfer } from "better-auth";
-// export type UserRawType = UserRawInfer;
+// User type for compatibility
+export type UserDbType = User;
+
+// Session type
+export type SessionType = Session;
+
+// JWT payload type
+export type JWTPayloadType = JWTPayload;
+
+// Re-export for convenience
+export type { User };

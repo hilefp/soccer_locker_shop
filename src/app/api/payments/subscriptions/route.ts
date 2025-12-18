@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getUserSubscriptions } from "~/api/payments/service";
 import { getCurrentUser } from "~/lib/auth";
+import { getUserSubscriptions } from "~/lib/api/payments";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();

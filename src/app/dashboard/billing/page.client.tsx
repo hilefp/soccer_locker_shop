@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import type { User } from "~/db/schema/users/types";
-import type { PolarSubscription } from "~/db/schema/payments/types";
+import type { PolarSubscription, User } from "~/lib/api/types";
 
 import { PaymentForm } from "~/ui/components/payments/PaymentForm";
 import { Button } from "~/ui/primitives/button";

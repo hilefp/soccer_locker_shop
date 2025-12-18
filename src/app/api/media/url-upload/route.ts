@@ -1,15 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
 import { NextResponse } from "next/server";
 
-import { db } from "~/db";
-import { uploadsTable } from "~/db/schema/uploads/tables";
-import { auth } from "~/lib/auth";
+import { getCurrentUser } from "~/lib/auth";
+import { createUpload } from "~/lib/api/uploads";
+import type { UploadType } from "~/lib/api/types";
 
 export async function POST(req: Request) {
   try {
     // Check authentication
-    const session = await auth.api.getSession({ headers: req.headers });
-    if (!session?.user) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     }
 
     // Detect media type from URL
-    const type = url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+    const type: UploadType | null = url.match(/\.(jpg|jpeg|png|gif|webp)$/i)
       ? "image"
       : url.match(/\.(mp4|webm|mov)$/i)
         ? "video"
@@ -47,14 +47,12 @@ export async function POST(req: Request) {
     // Create a unique key for the media
     const key = `url-${createId()}`;
 
-    // Insert into database
-    await db.insert(uploadsTable).values({
-      createdAt: new Date(),
-      id: createId(),
+    // Create upload in external API
+    await createUpload({
       key,
       type,
       url,
-      userId: session.user.id,
+      userId: user.id,
     });
 
     return NextResponse.json({ success: true });

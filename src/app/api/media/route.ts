@@ -1,16 +1,16 @@
-import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { UTApi } from "uploadthing/server";
 
-import { db } from "~/db";
-import { uploadsTable } from "~/db/schema/uploads/tables";
-import { auth } from "~/lib/auth";
+import { getCurrentUser } from "~/lib/auth";
+import {
+  deleteUpload,
+  getUploadsByUserId,
+} from "~/lib/api/uploads";
 
 export async function DELETE(request: Request) {
   try {
-    const session = await auth.api.getSession({ headers: request.headers });
-    if (!session) {
+    const user = await getCurrentUser();
+    if (!user) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -19,16 +19,15 @@ export async function DELETE(request: Request) {
       return new NextResponse("Missing media ID", { status: 400 });
     }
 
-    // Get the media item to check ownership and get the key
-    const mediaItem = await db.query.uploadsTable.findFirst({
-      where: eq(uploadsTable.id, body.id),
-    });
+    // Get the media items from external API to check ownership
+    const userMedia = await getUploadsByUserId(user.id);
+    const mediaItem = userMedia.find((item) => item.id === body.id);
 
     if (!mediaItem) {
       return new NextResponse("Media not found", { status: 404 });
     }
 
-    if (mediaItem.userId !== session.user.id) {
+    if (mediaItem.userId !== user.id) {
       return new NextResponse("Unauthorized", { status: 403 });
     }
 
@@ -36,8 +35,8 @@ export async function DELETE(request: Request) {
     const utapi = new UTApi();
     await utapi.deleteFiles(mediaItem.key);
 
-    // Delete from database
-    await db.delete(uploadsTable).where(eq(uploadsTable.id, body.id));
+    // Delete from external API
+    await deleteUpload(body.id);
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
@@ -52,28 +51,14 @@ export async function DELETE(request: Request) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: Request) {
   try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
+    const user = await getCurrentUser();
 
-    if (!session?.user?.id) {
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
-
-    // Fetch all media types for the user
-    const userMedia = await db
-      .select({
-        createdAt: uploadsTable.createdAt,
-        id: uploadsTable.id,
-        key: uploadsTable.key,
-        type: uploadsTable.type,
-        url: uploadsTable.url,
-      })
-      .from(uploadsTable)
-      .where(eq(uploadsTable.userId, userId))
-      .orderBy(uploadsTable.createdAt);
+    // Fetch all media types for the user from external API
+    const userMedia = await getUploadsByUserId(user.id);
 
     return NextResponse.json(userMedia);
   } catch (error) {

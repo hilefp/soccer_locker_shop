@@ -4,7 +4,7 @@ import { AlertCircle, Link as LinkIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-import type { MediaUpload } from "~/db/schema/uploads/types";
+import type { Upload } from "~/lib/api/types";
 import type { GalleryMediaItem } from "~/ui/components/blocks/bento-media-gallery";
 
 import { UploadButton } from "~/lib/uploadthing";
