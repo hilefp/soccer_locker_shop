@@ -1,99 +1,65 @@
-// Authentication API client - calls external API
+// Shop Authentication API Client
 
 import { apiPost } from "~/lib/api/client";
 import type {
-  AuthResponse,
-  SignInRequest,
-  SignUpRequest,
+  ShopAuthResponse,
+  ShopForgotPasswordRequest,
+  ShopLoginRequest,
+  ShopPasswordResetResponse,
+  ShopRegisterRequest,
+  ShopResetPasswordRequest,
 } from "~/lib/api/types";
 
+const SHOP_AUTH_BASE = "/shop/auth";
+
 /**
- * Sign in with email and password
+ * Register new shop customer
  */
-export async function signInWithEmail(
-  credentials: SignInRequest,
-): Promise<AuthResponse> {
-  return apiPost<AuthResponse>("/auth/signin", credentials);
+export async function registerShopCustomer(
+  data: ShopRegisterRequest,
+): Promise<ShopAuthResponse> {
+  return apiPost<ShopAuthResponse>(`${SHOP_AUTH_BASE}/register`, data);
 }
 
 /**
- * Sign up with email and password
+ * Login shop customer
  */
-export async function signUpWithEmail(
-  data: SignUpRequest,
-): Promise<AuthResponse> {
-  return apiPost<AuthResponse>("/auth/signup", data);
-}
-
-/**
- * Sign out - invalidate session on external API
- */
-export async function signOut(refreshToken: string): Promise<void> {
-  await apiPost("/auth/signout", { refreshToken });
-}
-
-/**
- * Refresh JWT token
- */
-export async function refreshAuthToken(
-  refreshToken: string,
-): Promise<AuthResponse> {
-  return apiPost<AuthResponse>("/auth/refresh", { refreshToken });
-}
-
-/**
- * Get current user from external API
- */
-export async function fetchCurrentUser() {
-  try {
-    const response = await apiPost("/auth/me");
-    return response;
-  } catch (error) {
-    console.error("Failed to fetch current user:", error);
-    return null;
-  }
+export async function loginShopCustomer(
+  credentials: ShopLoginRequest,
+): Promise<ShopAuthResponse> {
+  return apiPost<ShopAuthResponse>(`${SHOP_AUTH_BASE}/login`, credentials);
 }
 
 /**
  * Request password reset
  */
 export async function requestPasswordReset(
-  email: string,
-): Promise<void> {
-  await apiPost("/auth/password/reset-request", { email });
+  data: ShopForgotPasswordRequest,
+): Promise<ShopPasswordResetResponse> {
+  return apiPost<ShopPasswordResetResponse>(
+    `${SHOP_AUTH_BASE}/forgot-password`,
+    data,
+  );
 }
 
 /**
  * Reset password with token
  */
 export async function resetPassword(
-  token: string,
-  newPassword: string,
-): Promise<void> {
-  await apiPost("/auth/password/reset", {
-    newPassword,
-    token,
-  });
+  data: ShopResetPasswordRequest,
+): Promise<ShopPasswordResetResponse> {
+  return apiPost<ShopPasswordResetResponse>(
+    `${SHOP_AUTH_BASE}/reset-password`,
+    data,
+  );
 }
 
 /**
- * Get GitHub OAuth URL
+ * Sign out - client-side only (clears local state)
  */
-export function getGitHubOAuthUrl(): string {
-  const apiUrl =
-    typeof window === "undefined"
-      ? process.env.NEXT_SERVER_API_URL
-      : process.env.NEXT_PUBLIC_API_URL;
-  return `${apiUrl}/auth/oauth/github`;
-}
-
-/**
- * Get Google OAuth URL
- */
-export function getGoogleOAuthUrl(): string {
-  const apiUrl =
-    typeof window === "undefined"
-      ? process.env.NEXT_SERVER_API_URL
-      : process.env.NEXT_PUBLIC_API_URL;
-  return `${apiUrl}/auth/oauth/google`;
+export async function signOutShopCustomer(): Promise<void> {
+  // Clear local storage
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth-token");
+  }
 }

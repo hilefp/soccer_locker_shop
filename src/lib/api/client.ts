@@ -24,10 +24,8 @@ export const apiClientBrowser = ofetch.create({
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("auth-token");
       if (token) {
-        options.headers = {
-          ...options.headers,
-          Authorization: `Bearer ${token}`,
-        };
+        options.headers = options.headers || {};
+        (options.headers as unknown as Record<string, string>).Authorization = `Bearer ${token}`;
       }
     }
   },
@@ -46,7 +44,7 @@ export async function apiGet<T>(
 
 export async function apiPost<T>(
   path: string,
-  body?: unknown,
+  body?: Record<string, any> | null,
   options?: RequestInit,
 ): Promise<T> {
   return apiClientBrowser<T>(path, {
@@ -58,7 +56,7 @@ export async function apiPost<T>(
 
 export async function apiPut<T>(
   path: string,
-  body?: unknown,
+  body?: Record<string, any> | null,
   options?: RequestInit,
 ): Promise<T> {
   return apiClientBrowser<T>(path, {
@@ -70,7 +68,7 @@ export async function apiPut<T>(
 
 export async function apiPatch<T>(
   path: string,
-  body?: unknown,
+  body?: Record<string, any> | null,
   options?: RequestInit,
 ): Promise<T> {
   return apiClientBrowser<T>(path, {

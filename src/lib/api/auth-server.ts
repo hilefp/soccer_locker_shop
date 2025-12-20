@@ -4,7 +4,7 @@ import * as jose from "jose";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import type { JWTPayload, User } from "~/lib/api/types";
+import type { JWTPayload, ShopCustomer, User } from "~/lib/api/types";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -19,12 +19,24 @@ export async function verifyToken(
   token: string,
 ): Promise<JWTPayload | null> {
   try {
+    // First, decode without verification to see what's inside
+    const decoded = jose.decodeJwt(token);
+    console.log("🔓 JWT decoded (unverified):", decoded);
+
     const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jose.jwtVerify(token, secret);
 
+    console.log("✅ JWT verified successfully");
     return payload as unknown as JWTPayload;
   } catch (error) {
-    console.error("JWT verification failed:", error);
+    console.error("❌ JWT verification failed:", error);
+    // Also decode to see what was in the token
+    try {
+      const decoded = jose.decodeJwt(token);
+      console.log("🔓 Failed token contents:", decoded);
+    } catch (decodeError) {
+      console.error("Failed to decode token:", decodeError);
+    }
     return null;
   }
 }
@@ -60,17 +72,26 @@ export async function getSession(): Promise<{
   const token = cookieStore.get("auth-token")?.value;
 
   if (!token) {
+    console.log("🔍 getSession: No token found in cookies");
     return null;
   }
 
+  console.log("🔍 getSession: Token found, verifying...");
   const payload = await verifyToken(token);
   if (!payload) {
+    // Token is invalid - return null without modifying cookies
+    // (Cookie modification can only happen in Server Actions/Route Handlers)
+    console.log("🔍 getSession: Token verification failed");
     return null;
   }
+
+  console.log("🔍 getSession: Token verified, payload:", payload);
+  const user = jwtPayloadToUser(payload);
+  console.log("🔍 getSession: Converted to user:", user);
 
   return {
     token,
-    user: jwtPayloadToUser(payload),
+    user,
   };
 }
 
@@ -86,7 +107,7 @@ export async function getCurrentUser(): Promise<User | null> {
  * Get current user or redirect to sign-in
  */
 export async function getCurrentUserOrRedirect(
-  forbiddenUrl = "/auth/sign-in",
+  forbiddenUrl = "/auth/login",
   okUrl = "",
   ignoreForbidden = false,
 ): Promise<User | null> {
@@ -120,6 +141,8 @@ export async function setAuthCookie(
 ): Promise<void> {
   const cookieStore = await cookies();
 
+  console.log("🍪 setAuthCookie: Setting cookie with token:", token.substring(0, 20) + "...");
+
   // Set access token
   cookieStore.set("auth-token", token, {
     httpOnly: true,
@@ -128,6 +151,8 @@ export async function setAuthCookie(
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   });
+
+  console.log("🍪 setAuthCookie: Cookie set successfully");
 
   // Set refresh token if provided
   if (refreshToken) {

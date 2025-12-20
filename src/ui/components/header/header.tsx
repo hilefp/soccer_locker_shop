@@ -23,7 +23,7 @@ interface HeaderProps {
 
 export function Header({ showAuth = true }: HeaderProps) {
   const pathname = usePathname();
-  const { isPending, user } = useCurrentUser();
+  const { loading, user } = useCurrentUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const mainNavigation = [
@@ -31,24 +31,13 @@ export function Header({ showAuth = true }: HeaderProps) {
     { href: "/products", name: "Products" },
   ];
 
-  const dashboardNavigation = [
-    { href: "/dashboard/stats", name: "Stats" },
-    { href: "/dashboard/profile", name: "Profile" },
-    { href: "/dashboard/settings", name: "Settings" },
-    { href: "/dashboard/uploads", name: "Uploads" },
-    { href: "/admin/summary", name: "Admin" },
-  ];
-
-  const isDashboard =
-    user &&
-    (pathname.startsWith("/dashboard") || pathname.startsWith("/admin")); // todo: remove /admin when admin role is implemented
-  const navigation = isDashboard ? dashboardNavigation : mainNavigation;
+  const isDashboard = user && pathname.startsWith("/dashboard");
+  const navigation = mainNavigation;
 
   const renderContent = () => (
     <header
       className={`
-        sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur
-        supports-[backdrop-filter]:bg-background/60
+        sticky top-0 z-40 w-full backdrop-blur
       `}
     >
       <div
@@ -68,7 +57,7 @@ export function Header({ showAuth = true }: HeaderProps) {
                     `
                       bg-gradient-to-r from-primary to-primary/70 bg-clip-text
                       tracking-tight text-transparent
-                    `,
+                    `
                 )}
               >
                 {SEO_CONFIG.name}
@@ -81,7 +70,7 @@ export function Header({ showAuth = true }: HeaderProps) {
               `}
             >
               <ul className="flex items-center gap-6">
-                {isPending
+                {loading
                   ? Array.from({ length: navigation.length }).map((_, i) => (
                       <li key={i}>
                         <Skeleton className="h-6 w-20" />
@@ -102,7 +91,7 @@ export function Header({ showAuth = true }: HeaderProps) {
                               `,
                               isActive
                                 ? "font-semibold text-primary"
-                                : "text-muted-foreground",
+                                : "text-muted-foreground"
                             )}
                             href={item.href}
                           >
@@ -117,13 +106,13 @@ export function Header({ showAuth = true }: HeaderProps) {
 
           <div className="flex items-center gap-4">
             {!isDashboard &&
-              (isPending ? (
+              (loading ? (
                 <Skeleton className={`h-9 w-9 rounded-full`} />
               ) : (
                 <Cart />
               ))}
 
-            {isPending ? (
+            {loading ? (
               <Skeleton className="h-9 w-9 rounded-full" />
             ) : (
               <NotificationsWidget />
@@ -140,19 +129,23 @@ export function Header({ showAuth = true }: HeaderProps) {
                   <HeaderUserDropdown
                     isDashboard={!!isDashboard}
                     userEmail={user.email}
-                    userImage={user.image}
-                    userName={user.name}
+                    userImage={user.profile?.avatarUrl}
+                    userName={
+                      `${user.profile?.firstName || ""} ${
+                        user.profile?.lastName || ""
+                      }`.trim() || "User"
+                    }
                   />
-                ) : isPending ? (
+                ) : loading ? (
                   <Skeleton className="h-10 w-32" />
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Link href="/auth/sign-in">
+                    <Link href="/auth/login">
                       <Button size="sm" variant="ghost">
                         Log in
                       </Button>
                     </Link>
-                    <Link href="/auth/sign-up">
+                    <Link href="/auth/register">
                       <Button size="sm">Sign up</Button>
                     </Link>
                   </div>
@@ -161,7 +154,7 @@ export function Header({ showAuth = true }: HeaderProps) {
             )}
 
             {!isDashboard &&
-              (isPending ? (
+              (loading ? (
                 <Skeleton className={`h-9 w-9 rounded-full`} />
               ) : (
                 <ThemeToggle />
@@ -188,7 +181,7 @@ export function Header({ showAuth = true }: HeaderProps) {
       {mobileMenuOpen && (
         <div className="md:hidden">
           <div className="space-y-1 border-b px-4 py-3">
-            {isPending
+            {loading
               ? Array.from({ length: navigation.length }).map((_, i) => (
                   <div className="py-2" key={i}>
                     <Skeleton className="h-6 w-32" />
@@ -208,7 +201,7 @@ export function Header({ showAuth = true }: HeaderProps) {
                           : `
                             text-foreground
                             hover:bg-muted/50 hover:text-primary
-                          `,
+                          `
                       )}
                       href={item.href}
                       key={item.name}
@@ -227,7 +220,7 @@ export function Header({ showAuth = true }: HeaderProps) {
                   block rounded-md px-3 py-2 text-base font-medium
                   hover:bg-muted/50
                 `}
-                href="/auth/sign-in"
+                href="/auth/login"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Log in
@@ -238,7 +231,7 @@ export function Header({ showAuth = true }: HeaderProps) {
                   text-primary-foreground
                   hover:bg-primary/90
                 `}
-                href="/auth/sign-up"
+                href="/auth/register"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Sign up

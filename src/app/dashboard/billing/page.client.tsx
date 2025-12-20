@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { PolarSubscription, User } from "~/lib/api/types";
 
 import { PaymentForm } from "~/ui/components/payments/PaymentForm";
+import { SidebarAccount } from "~/ui/components/sidebar-account";
 import { Button } from "~/ui/primitives/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "~/ui/primitives/card";
 import { Alert, AlertDescription, AlertTitle } from "~/ui/primitives/alert";
@@ -36,7 +37,7 @@ export function BillingPageClient({ user }: BillingPageClientProps) {
 
   useEffect(() => {
     if (!user) {
-      router.push("/auth/sign-in");
+      router.push("/auth/login");
       return;
     }
 
@@ -88,92 +89,138 @@ export function BillingPageClient({ user }: BillingPageClientProps) {
 
   if (loading) {
     return (
-      <div className="container mx-auto py-10">
-        <h1 className="text-3xl font-bold mb-6">Billing</h1>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-8 w-1/3" />
-            <Skeleton className="h-4 w-2/3" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-20 w-full" />
-          </CardContent>
-          <CardFooter>
-            <Skeleton className="h-10 w-full" />
-          </CardFooter>
-        </Card>
+      <div
+        className={`
+          max-w-7xl mx-auto grid flex-1 items-start gap-4 p-4
+          md:grid-cols-2 md:gap-8
+          lg:grid-cols-3
+        `}
+      >
+        <div
+          className={`
+            grid gap-4
+            md:col-span-2
+            lg:col-span-1
+          `}
+        >
+          <SidebarAccount />
+        </div>
+        <div
+          className={`
+            grid gap-4
+            md:col-span-2
+            lg:col-span-2
+          `}
+        >
+          <h1 className="text-3xl font-bold">Billing</h1>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-8 w-1/3" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-20 w-full" />
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-10 w-full" />
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Billing</h1>
-      
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Subscription Status */}
-      <div className="grid gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Subscription Status</CardTitle>
-            <CardDescription>
-              Your current subscription plan and status
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {subscriptions.length > 0 ? (
-              <div className="space-y-4">
-                {subscriptions.map((subscription) => (
-                  <div key={subscription.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <h3 className="font-medium">{subscription.productId}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        ID: {subscription.subscriptionId}
-                      </p>
-                    </div>
-                    <Badge variant={subscription.status === "active" ? "default" : "outline"}>
-                      {subscription.status}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground">You don't have any active subscriptions.</p>
-            )}
-          </CardContent>
-          <CardFooter>
-            {hasActiveSubscription && (
-              <Button variant="outline" onClick={() => router.push("/auth/customer-portal")}>
-                Manage Subscription
-              </Button>
-            )}
-          </CardFooter>
-        </Card>
+    <div
+      className={`
+        max-w-7xl mx-auto grid flex-1 items-start gap-4 p-4
+        md:grid-cols-2 md:gap-8
+        lg:grid-cols-3
+      `}
+    >
+      <div
+        className={`
+          grid gap-4
+          md:col-span-2
+          lg:col-span-1
+        `}
+      >
+        <SidebarAccount />
       </div>
+      <div
+        className={`
+          grid gap-4
+          md:col-span-2
+          lg:col-span-2
+        `}
+      >
+        <h1 className="text-3xl font-bold">Billing</h1>
 
-      {/* Payment Plans */}
-      {!hasActiveSubscription && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <PaymentForm 
-            productSlug="pro" 
-            title="Pro Plan"
-            description="Get access to all premium features and priority support."
-            buttonText="Subscribe to Pro"
-          />
-          <PaymentForm 
-            productSlug="premium" 
-            title="Premium Plan"
-            description="Everything in Pro plus exclusive content and early access to new features."
-            buttonText="Subscribe to Premium"
-          />
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Subscription Status */}
+        <div className="grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Subscription Status</CardTitle>
+              <CardDescription>
+                Your current subscription plan and status
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {subscriptions.length > 0 ? (
+                <div className="space-y-4">
+                  {subscriptions.map((subscription) => (
+                    <div key={subscription.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h3 className="font-medium">{subscription.productId}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          ID: {subscription.subscriptionId}
+                        </p>
+                      </div>
+                      <Badge variant={subscription.status === "active" ? "default" : "outline"}>
+                        {subscription.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">You don't have any active subscriptions.</p>
+              )}
+            </CardContent>
+            <CardFooter>
+              {hasActiveSubscription && (
+                <Button variant="outline" onClick={() => router.push("/auth/customer-portal")}>
+                  Manage Subscription
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
         </div>
-      )}
+
+        {/* Payment Plans */}
+        {!hasActiveSubscription && (
+          <div className="grid gap-6 md:grid-cols-2">
+            <PaymentForm
+              productSlug="pro"
+              title="Pro Plan"
+              description="Get access to all premium features and priority support."
+              buttonText="Subscribe to Pro"
+            />
+            <PaymentForm
+              productSlug="premium"
+              title="Premium Plan"
+              description="Everything in Pro plus exclusive content and early access to new features."
+              buttonText="Subscribe to Premium"
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

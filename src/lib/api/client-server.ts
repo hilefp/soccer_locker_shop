@@ -21,10 +21,8 @@ export const apiClientServer = ofetch.create({
     const cookieStore = await cookies();
     const token = cookieStore.get("auth-token")?.value;
     if (token) {
-      options.headers = {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
-      };
+      options.headers = options.headers || {};
+      (options.headers as unknown as Record<string, string>).Authorization = `Bearer ${token}`;
     }
   },
   async onResponseError({ response }) {
@@ -42,7 +40,7 @@ export async function apiGetServer<T>(
 
 export async function apiPostServer<T>(
   path: string,
-  body?: unknown,
+  body?: Record<string, any> | null,
   options?: RequestInit,
 ): Promise<T> {
   return apiClientServer<T>(path, {
@@ -54,7 +52,7 @@ export async function apiPostServer<T>(
 
 export async function apiPatchServer<T>(
   path: string,
-  body?: unknown,
+  body?: Record<string, any> | null,
   options?: RequestInit,
 ): Promise<T> {
   return apiClientServer<T>(path, {

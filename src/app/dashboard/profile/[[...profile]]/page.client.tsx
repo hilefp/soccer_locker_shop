@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { twoFactor, useCurrentUserOrRedirect } from "~/lib/auth-client";
+import { SidebarAccount } from "~/ui/components/sidebar-account";
 import { Button } from "~/ui/primitives/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/ui/primitives/card";
 import { Input } from "~/ui/primitives/input";
@@ -12,7 +13,7 @@ import { Label } from "~/ui/primitives/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/ui/primitives/tabs";
 
 export function ProfilePageClient() {
-  const { isPending, user } = useCurrentUserOrRedirect();
+  const { loading: authLoading, user } = useCurrentUserOrRedirect();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -21,7 +22,7 @@ export function ProfilePageClient() {
   const [qrCodeData, setQrCodeData] = useState("");
   const [secret, setSecret] = useState("");
 
-  if (isPending) {
+  if (authLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -63,13 +64,13 @@ export function ProfilePageClient() {
           setMessage("Scan the QR code with your authenticator app");
         } else {
           setError(
-            "Failed to enable two-factor authentication. Unexpected response format.",
+            "Failed to enable two-factor authentication. Unexpected response format."
           );
         }
       })
       .catch((err: unknown) => {
         setError(
-          "Failed to enable two-factor authentication. Please try again.",
+          "Failed to enable two-factor authentication. Please try again."
         );
         console.error(err);
       })
@@ -97,7 +98,7 @@ export function ProfilePageClient() {
       })
       .catch((err: unknown) => {
         setError(
-          "Failed to disable two-factor authentication. Please try again.",
+          "Failed to disable two-factor authentication. Please try again."
         );
         console.error(err);
       })
@@ -109,18 +110,35 @@ export function ProfilePageClient() {
   return (
     <div
       className={`
-        container space-y-6 p-4
-        md:p-8
+        max-w-7xl mx-auto grid flex-1 items-start gap-4 p-4
+        md:grid-cols-2 md:gap-8
+        lg:grid-cols-3
       `}
     >
-      <div className="space-y-0.5">
-        <h2 className="text-2xl font-bold tracking-tight">Profile</h2>
-        <p className="text-muted-foreground">
-          Manage your profile and security settings.
-        </p>
+      <div
+        className={`
+          grid gap-4
+          md:col-span-2
+          lg:col-span-1
+        `}
+      >
+        <SidebarAccount />
       </div>
+      <div
+        className={`
+          grid gap-4 space-y-6
+          md:col-span-2
+          lg:col-span-2
+        `}
+      >
+        <div className="space-y-0.5">
+          <h2 className="text-2xl font-bold tracking-tight">Profile</h2>
+          <p className="text-muted-foreground">
+            Manage your profile and security settings.
+          </p>
+        </div>
 
-      <Tabs className="space-y-4" defaultValue="general">
+        <Tabs className="space-y-4" defaultValue="general">
         <TabsList>
           <TabsTrigger className="flex items-center gap-2" value="general">
             <User className="h-4 w-4" />
@@ -141,7 +159,9 @@ export function ProfilePageClient() {
               <div className="grid gap-2">
                 <Label htmlFor="name">Name</Label>
                 <Input
-                  defaultValue={user?.name || ""}
+                  defaultValue={`${user?.profile?.firstName || ""} ${
+                    user?.profile?.lastName || ""
+                  }`.trim()}
                   id="name"
                   placeholder="Enter your name"
                 />
@@ -258,6 +278,7 @@ export function ProfilePageClient() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

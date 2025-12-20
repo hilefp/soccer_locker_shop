@@ -469,7 +469,7 @@ export default function HomePage() {
                     sm:flex-row
                   `}
                 >
-                  <Link href="/auth/sign-up">
+                  <Link href="/auth/register">
                     <Button
                       className="h-12 px-8 transition-colors duration-200"
                       size="lg"

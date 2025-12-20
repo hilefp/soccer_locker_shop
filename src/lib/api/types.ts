@@ -71,6 +71,71 @@ export interface AuthResponse {
   user: User;
 }
 
+// Shop Customer Types
+export interface ShopCustomerProfile {
+  address: string | null;
+  avatarUrl: string | null;
+  birthDate: Date | null;
+  city: string | null;
+  companyName: string | null;
+  country: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  newsletter: boolean;
+  phone: string | null;
+  postalCode: string | null;
+  state: string | null;
+  taxId: string | null;
+}
+
+export interface ShopCustomer {
+  email: string;
+  id: string;
+  profile: ShopCustomerProfile;
+}
+
+export interface ShopRegisterRequest {
+  address?: string;
+  avatarUrl?: string;
+  birthDate?: string; // ISO date string
+  city?: string;
+  companyName?: string;
+  country?: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  newsletter?: boolean;
+  password: string;
+  phone?: string;
+  postalCode?: string;
+  state?: string;
+  taxId?: string;
+}
+
+export interface ShopLoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface ShopForgotPasswordRequest {
+  email: string;
+}
+
+export interface ShopResetPasswordRequest {
+  newPassword: string;
+  token: string;
+}
+
+export interface ShopAuthResponse {
+  accessToken: string;
+  message: string;
+  user: ShopCustomer;
+}
+
+export interface ShopPasswordResetResponse {
+  message: string;
+}
+
 // Payment Types (Polar)
 export interface PolarCustomer {
   createdAt: Date | string;
