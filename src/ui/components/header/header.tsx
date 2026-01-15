@@ -1,6 +1,7 @@
 "use client";
 
 import { Menu, X } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -37,7 +38,9 @@ export function Header({ showAuth = true }: HeaderProps) {
   const renderContent = () => (
     <header
       className={`
-        sticky top-0 z-40 w-full backdrop-blur
+        sticky top-0 z-40 w-full border-b border-transparent bg-background/80
+        backdrop-blur-sm transition-colors duration-200
+        hover:border-border/50
       `}
     >
       <div
@@ -47,33 +50,24 @@ export function Header({ showAuth = true }: HeaderProps) {
           lg:px-8
         `}
       >
-        <div className="flex h-16 items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link className="flex items-center gap-2" href="/">
-              <span
-                className={cn(
-                  "text-xl font-bold",
-                  !isDashboard &&
-                    `
-                      bg-gradient-to-r from-primary to-primary/70 bg-clip-text
-                      tracking-tight text-transparent
-                    `
-                )}
-              >
-                {SEO_CONFIG.name}
-              </span>
+        <div className="flex h-20 items-center justify-between">
+          <div className="flex items-center gap-8">
+            <Link className="flex items-center" href="/">
+              <Image
+                alt="Soccer Locker"
+                className="h-10 w-auto"
+                height={57}
+                priority
+                src="/Logo.svg"
+                width={157}
+              />
             </Link>
-            <nav
-              className={`
-                hidden
-                md:flex
-              `}
-            >
+            <nav className="hidden md:flex">
               <ul className="flex items-center gap-6">
                 {loading
                   ? Array.from({ length: navigation.length }).map((_, i) => (
                       <li key={i}>
-                        <Skeleton className="h-6 w-20" />
+                        <Skeleton className="h-5 w-16" />
                       </li>
                     ))
                   : navigation.map((item) => {
@@ -85,12 +79,9 @@ export function Header({ showAuth = true }: HeaderProps) {
                         <li key={item.name}>
                           <Link
                             className={cn(
-                              `
-                                text-sm font-medium transition-colors
-                                hover:text-primary
-                              `,
+                              "text-sm transition-colors hover:text-foreground",
                               isActive
-                                ? "font-semibold text-primary"
+                                ? "font-medium text-foreground"
                                 : "text-muted-foreground"
                             )}
                             href={item.href}
@@ -104,27 +95,22 @@ export function Header({ showAuth = true }: HeaderProps) {
             </nav>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {!isDashboard &&
               (loading ? (
-                <Skeleton className={`h-9 w-9 rounded-full`} />
+                <Skeleton className="h-8 w-8 rounded-full" />
               ) : (
                 <Cart />
               ))}
 
             {loading ? (
-              <Skeleton className="h-9 w-9 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
             ) : (
               <NotificationsWidget />
             )}
 
             {showAuth && (
-              <div
-                className={`
-                  hidden
-                  md:block
-                `}
-              >
+              <div className="hidden md:block">
                 {user ? (
                   <HeaderUserDropdown
                     isDashboard={!!isDashboard}
@@ -137,7 +123,7 @@ export function Header({ showAuth = true }: HeaderProps) {
                     }
                   />
                 ) : loading ? (
-                  <Skeleton className="h-10 w-32" />
+                  <Skeleton className="h-9 w-28" />
                 ) : (
                   <div className="flex items-center gap-2">
                     <Link href="/auth/login">
@@ -155,7 +141,7 @@ export function Header({ showAuth = true }: HeaderProps) {
 
             {!isDashboard &&
               (loading ? (
-                <Skeleton className={`h-9 w-9 rounded-full`} />
+                <Skeleton className="h-8 w-8 rounded-full" />
               ) : (
                 <ThemeToggle />
               ))}

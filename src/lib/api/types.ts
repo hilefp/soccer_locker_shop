@@ -175,3 +175,169 @@ export interface CreateUploadRequest {
   url: string;
   userId: string;
 }
+
+// Club Types
+export interface Club {
+  id: string;
+  name: string;
+  description: string | null;
+  imageUrl: string | null;
+  logoUrl: string | null;
+  websiteUrl: string | null;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  postalCode: string | null;
+  iconBrandShopUrl: string | null;
+  descriptionShop: string | null;
+  personInCharge: string | null;
+  personInChargeEmail: string | null;
+  personInChargePhone: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Product Types
+export interface ProductCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  parentId: string | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductBrand {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  imageUrl: string | null;
+  websiteUrl: string | null;
+  code: string;
+  isActive: boolean;
+  metadata: any | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  slug: string;
+  model: string | null;
+  categoryId: string;
+  brandId: string;
+  imageUrl: string | null;
+  tags: string[];
+  imageUrls: string[];
+  isActive: boolean;
+  isFeatured: boolean;
+  minPrice: string | null;
+  maxPrice: string | null;
+  createdAt: string;
+  updatedAt: string;
+  category: ProductCategory;
+  brand: ProductBrand;
+}
+
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  sku: string;
+  barcode: string | null;
+  attributes: Record<string, string>;
+  isDefault: boolean;
+  price: string;
+  compareAtPrice: string | null;
+  cost: string | null;
+  weight: string | null;
+  weightUnit: string | null;
+  dimensions: string | null;
+  dimensionUnit: string | null;
+  imageUrl: string | null;
+  isActive: boolean;
+  imageUrls: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProductWithVariants extends Product {
+  variants: ProductVariant[];
+}
+
+export interface ClubProduct {
+  id: string;
+  clubId: string;
+  productId: string;
+  name: string | null;
+  price: string;
+  description: string | null;
+  imageUrls: string[];
+  brandLogoUrl: string | null;
+  isActive: boolean;
+  stock: number;
+  createdAt: string;
+  updatedAt: string;
+  product: Product;
+}
+
+export interface ClubProductDetail {
+  id: string;
+  clubId: string;
+  productId: string;
+  name: string | null;
+  price: string;
+  description: string | null;
+  imageUrls: string[];
+  brandLogoUrl: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  product: ProductWithVariants;
+}
+
+export interface ClubProductsResponse {
+  data: ClubProduct[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export enum SortOrder {
+  ASC = "asc",
+  DESC = "desc",
+}
+
+export enum SortBy {
+  NAME = "name",
+  PRICE = "price",
+  CREATED_AT = "createdAt",
+  STOCK = "stock",
+}
+
+export interface ClubProductFilters {
+  page?: number;
+  limit?: number;
+  search?: string;
+  categoryId?: string;
+  brandId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  isActive?: boolean;
+  inStock?: boolean;
+  sortBy?: SortBy;
+  sortOrder?: SortOrder;
+  tags?: string;
+}
