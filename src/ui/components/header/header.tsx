@@ -7,13 +7,12 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { SEO_CONFIG } from "~/app";
-import { useCurrentUser } from "~/lib/auth-client";
+import { useAuth } from "~/lib/hooks/use-auth";
 import { cn } from "~/lib/cn";
 import { Cart } from "~/ui/components/cart";
 import { Button } from "~/ui/primitives/button";
 import { Skeleton } from "~/ui/primitives/skeleton";
 
-import { NotificationsWidget } from "../notifications/notifications-widget";
 import { ThemeToggle } from "../theme-toggle";
 import { HeaderUserDropdown } from "./header-user";
 
@@ -24,8 +23,13 @@ interface HeaderProps {
 
 export function Header({ showAuth = true }: HeaderProps) {
   const pathname = usePathname();
-  const { loading, user } = useCurrentUser();
+  const { loading, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setMobileMenuOpen(false);
+    await logout();
+  };
 
   const mainNavigation = [
     { href: "/", name: "Home" },
@@ -123,6 +127,7 @@ export function Header({ showAuth = true }: HeaderProps) {
                         user.profile?.lastName || ""
                       }`.trim() || "User"
                     }
+                    onLogout={handleLogout}
                   />
                 ) : loading ? (
                   <Skeleton className="h-9 w-28" />
@@ -224,6 +229,34 @@ export function Header({ showAuth = true }: HeaderProps) {
               >
                 Sign up
               </Link>
+            </div>
+          )}
+
+          {showAuth && user && (
+            <div className="space-y-1 border-b px-4 py-3">
+              <div className="px-3 py-2 text-sm text-muted-foreground">
+                Signed in as {user.email}
+              </div>
+              <Link
+                className={`
+                  block rounded-md px-3 py-2 text-base font-medium
+                  hover:bg-muted/50
+                `}
+                href="/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Dashboard
+              </Link>
+              <button
+                className={`
+                  block w-full rounded-md px-3 py-2 text-left text-base font-medium
+                  text-destructive
+                  hover:bg-destructive/10
+                `}
+                onClick={handleLogout}
+              >
+                Log out
+              </button>
             </div>
           )}
         </div>

@@ -18,8 +18,8 @@ export const SEO_CONFIG = {
 };
 
 export const SYSTEM_CONFIG = {
-  redirectAfterSignIn: "/dashboard",
-  redirectAfterSignUp: "/dashboard",
+  redirectAfterSignIn: "/",
+  redirectAfterSignUp: "/",
   repoName: "soccer-locker-my-uniforms",
   repoOwner: "soccer-locker-my-uniforms",
   repoStars: true,

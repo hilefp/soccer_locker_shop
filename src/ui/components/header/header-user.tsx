@@ -1,5 +1,6 @@
+"use client";
+
 import {
-  BarChart,
   Home,
   LogOut,
   Settings,
@@ -23,6 +24,7 @@ interface HeaderUserDropdownProps {
   userEmail: string;
   userImage?: null | string;
   userName: string;
+  onLogout: () => void;
 }
 
 export function HeaderUserDropdown({
@@ -30,6 +32,7 @@ export function HeaderUserDropdown({
   userEmail,
   userImage,
   userName,
+  onLogout,
 }: HeaderUserDropdownProps) {
   return (
     <DropdownMenu>
@@ -108,21 +111,13 @@ export function HeaderUserDropdown({
 
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          asChild
           className={cn(
-            "cursor-pointer",
-            isDashboard
-              ? "text-red-600"
-              : `
-                txt-destructive
-                focus:text-destrctive
-              `,
+            "cursor-pointer text-destructive focus:text-destructive",
           )}
+          onClick={onLogout}
         >
-          <Link href="/auth/sign-out">
-            <LogOut className="mr-2 h-4 w-4" />
-            Log out
-          </Link>
+          <LogOut className="mr-2 h-4 w-4" />
+          Log out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
