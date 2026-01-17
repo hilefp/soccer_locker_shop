@@ -41,9 +41,13 @@ export function ClubProductsSection({
   ];
 
   useEffect(() => {
-    async function fetchProducts() {
-      if (!selectedCategory && products === initialProducts) return;
+    // Reset to initial products when "All Products" is selected
+    if (selectedCategory === null) {
+      setProducts(initialProducts);
+      return;
+    }
 
+    async function fetchProducts() {
       setIsLoading(true);
       try {
         const filters: ClubProductFilters = {
@@ -52,11 +56,8 @@ export function ClubProductsSection({
           isActive: true,
           sortBy: "createdAt" as any,
           sortOrder: "desc" as any,
+          categoryId: selectedCategory,
         };
-
-        if (selectedCategory) {
-          filters.categoryId = selectedCategory;
-        }
 
         const params = new URLSearchParams();
         Object.entries(filters).forEach(([key, value]) => {
@@ -79,7 +80,7 @@ export function ClubProductsSection({
     }
 
     fetchProducts();
-  }, [selectedCategory, clubId, initialProducts, products]);
+  }, [selectedCategory, clubId, initialProducts]);
 
   const displayedProducts = products;
 

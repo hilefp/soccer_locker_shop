@@ -44,7 +44,7 @@ export function LoginPageClient() {
   return (
     <div
       className={`
-        grid h-screen w-screen
+        grid h-[100vh] w-full overflow-hidden
         md:grid-cols-2
       `}
     >
@@ -61,7 +61,7 @@ export function LoginPageClient() {
           fill
           priority
           sizes="(max-width: 768px) 0vw, 50vw"
-          src="https://images.unsplash.com/photo-1719811059181-09032aef07b8?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3"
+          src="/WC-Hist-Set.jpg"
         />
         <div
           className={`
@@ -96,7 +96,7 @@ export function LoginPageClient() {
             </p>
           </div>
 
-          <Card className="border-none shadow-sm">
+          <Card className="border-none shadow-none">
             <CardContent className="pt-2">
               <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
                 <div className="grid gap-2">

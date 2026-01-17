@@ -49,7 +49,7 @@ export function ForgotPasswordPageClient() {
             </p>
           </div>
 
-          <Card className="border-none shadow-sm">
+          <Card className="border-none shadow-none">
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -79,7 +79,7 @@ export function ForgotPasswordPageClient() {
           </p>
         </div>
 
-        <Card className="border-none shadow-sm">
+        <Card className="border-none shadow-none">
           <CardContent className="pt-6">
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               <div className="grid gap-2">

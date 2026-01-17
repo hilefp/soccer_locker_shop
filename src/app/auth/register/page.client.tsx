@@ -80,7 +80,7 @@ export function RegisterPageClient() {
   return (
     <div
       className={`
-        grid min-h-screen w-screen
+        grid min-h-screen w-full overflow-hidden
         md:grid-cols-2
       `}
     >
@@ -97,7 +97,7 @@ export function RegisterPageClient() {
           fill
           priority
           sizes="(max-width: 768px) 0vw, 50vw"
-          src="https://images.unsplash.com/photo-1556740749-887f6717d7e4?q=80&w=1200&auto=format&fit=crop&ixlib=rb-4.0.3"
+          src="/WC-Hist-Set.jpg"
         />
         <div
           className={`
@@ -145,7 +145,7 @@ export function RegisterPageClient() {
             ))}
           </div>
 
-          <Card className="border-none shadow-sm">
+          <Card className="border-none shadow-none">
             <CardContent className="pt-2">
               <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
                 {/* Step 1: Account Credentials */}

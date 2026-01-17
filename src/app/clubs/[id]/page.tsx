@@ -28,7 +28,6 @@ export default async function ClubPage({ params }: ClubPageProps) {
     sortOrder: "desc" as any,
   });
 
-  console.log("productsData", productsData);
 
   // Extract unique categories from products
   const categoriesMap = new Map<string, ProductCategory>();
