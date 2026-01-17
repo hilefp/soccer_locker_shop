@@ -1,6 +1,5 @@
 import { ShoppingCart } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 
 import type { ClubProduct } from "~/lib/api/types";
 import { cn } from "~/lib/cn";
@@ -8,22 +7,23 @@ import { Button } from "~/ui/primitives/button";
 
 interface ClubProductCardProps {
   product: ClubProduct;
+  onClick?: () => void;
 }
 
-export function ClubProductCard({ product }: ClubProductCardProps) {
+export function ClubProductCard({ product, onClick }: ClubProductCardProps) {
   const displayName = product.name || product.product.name;
   const displayImage =
     product.imageUrls?.[0] ||
     product.product.imageUrls?.[0] ||
     product.product.imageUrl;
   const brandLogo = product.brandLogoUrl || product.product.brand.imageUrl;
-  const productUrl = `/clubs/${product.clubId}/products/${product.productId}`;
 
   return (
-    <Link
-      href={productUrl}
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-background",
+        "group relative flex flex-col overflow-hidden rounded-xl border border-border bg-background text-left",
         "transition-all duration-300 hover:shadow-lg hover:border-primary/30"
       )}
     >
@@ -96,6 +96,6 @@ export function ClubProductCard({ product }: ClubProductCardProps) {
           </Button>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }

@@ -1,4 +1,5 @@
-import { Facebook, Github, Instagram, Linkedin, Twitter } from "lucide-react";
+import { Facebook, Instagram, Mail, Phone, Twitter } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { SEO_CONFIG } from "~/app";
@@ -23,6 +24,13 @@ export function Footer({ className }: { className?: string }) {
         >
           <div className="space-y-4">
             <Link className="flex items-center gap-2" href="/">
+              <Image
+                src="/team-fav.png"
+                alt={SEO_CONFIG.name}
+                width={40}
+                height={40}
+                className="rounded"
+              />
               <span
                 className={`
                   bg-gradient-to-r from-primary to-primary/70 bg-clip-text
@@ -33,49 +41,55 @@ export function Footer({ className }: { className?: string }) {
               </span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Your one-stop shop for everything tech. Premium products at
-              competitive prices.
+              Choose your soccer club or academy to view and order your official
+              uniforms and fan gear. Click on team logos to shop uniforms for
+              each team.
             </p>
             <div className="flex space-x-4">
               <Button
                 className="h-8 w-8 rounded-full"
                 size="icon"
                 variant="ghost"
+                asChild
               >
-                <Facebook className="h-4 w-4" />
-                <span className="sr-only">Facebook</span>
+                <a
+                  href="https://facebook.com/soccerlocker"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Facebook className="h-4 w-4" />
+                  <span className="sr-only">Facebook</span>
+                </a>
               </Button>
               <Button
                 className="h-8 w-8 rounded-full"
                 size="icon"
                 variant="ghost"
+                asChild
               >
-                <Twitter className="h-4 w-4" />
-                <span className="sr-only">Twitter</span>
+                <a
+                  href="https://twitter.com/soccerlocker"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Twitter className="h-4 w-4" />
+                  <span className="sr-only">Twitter</span>
+                </a>
               </Button>
               <Button
                 className="h-8 w-8 rounded-full"
                 size="icon"
                 variant="ghost"
+                asChild
               >
-                <Instagram className="h-4 w-4" />
-                <span className="sr-only">Instagram</span>
-              </Button>
-              <Button
-                className="h-8 w-8 rounded-full"
-                size="icon"
-                variant="ghost"
-              >
-                <Github className="h-4 w-4" />
-                <span className="sr-only">GitHub</span>
-              </Button>
-              <Button
-                className="h-8 w-8 rounded-full"
-                size="icon"
-                variant="ghost"
-              >
-                <Linkedin className="h-4 w-4" />
-                <span className="sr-only">LinkedIn</span>
+                <a
+                  href="https://instagram.com/soccerlocker"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Instagram className="h-4 w-4" />
+                  <span className="sr-only">Instagram</span>
+                </a>
               </Button>
             </div>
           </div>
@@ -88,9 +102,9 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/products"
+                  href="/"
                 >
-                  All Products
+                  All Teams
                 </Link>
               </li>
               <li>
@@ -99,9 +113,9 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/products?category=audio"
+                  href="/?category=uniforms"
                 >
-                  Audio
+                  Uniforms
                 </Link>
               </li>
               <li>
@@ -110,9 +124,9 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/products?category=wearables"
+                  href="/?category=jerseys"
                 >
-                  Wearables
+                  Jerseys
                 </Link>
               </li>
               <li>
@@ -121,9 +135,9 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/products?category=smartphones"
+                  href="/?category=fan-gear"
                 >
-                  Smartphones
+                  Fan Gear
                 </Link>
               </li>
               <li>
@@ -132,9 +146,9 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/products?category=laptops"
+                  href="/?category=accessories"
                 >
-                  Laptops
+                  Accessories
                 </Link>
               </li>
             </ul>
@@ -159,31 +173,9 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/careers"
+                  href="/clubs"
                 >
-                  Careers
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/blog"
-                >
-                  Blog
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/press"
-                >
-                  Press
+                  Partner Clubs
                 </Link>
               </li>
               <li>
@@ -208,9 +200,9 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/help"
+                  href="/contact"
                 >
-                  Help Center
+                  Contact Us
                 </Link>
               </li>
               <li>
@@ -219,7 +211,7 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/shipping"
+                  href="/shipping-returns"
                 >
                   Shipping & Returns
                 </Link>
@@ -230,18 +222,7 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/warranty"
-                >
-                  Warranty
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/privacy"
+                  href="/privacy-policy"
                 >
                   Privacy Policy
                 </Link>
@@ -252,7 +233,7 @@ export function Footer({ className }: { className?: string }) {
                     text-muted-foreground
                     hover:text-foreground
                   `}
-                  href="/terms"
+                  href="/terms-service"
                 >
                   Terms of Service
                 </Link>
@@ -260,7 +241,8 @@ export function Footer({ className }: { className?: string }) {
             </ul>
           </div>
         </div>
-        <div className="mt-12 border-t pt-8">
+
+        <div className="mt-4 border-none pt-1">
           <div
             className={`
               flex flex-col items-center justify-between gap-4
@@ -276,17 +258,11 @@ export function Footer({ className }: { className?: string }) {
                 "flex items-center gap-4 text-sm text-muted-foreground"
               }
             >
-              <Link className="hover:text-foreground" href="/privacy">
+              <Link className="hover:text-foreground" href="/privacy-policy">
                 Privacy
               </Link>
-              <Link className="hover:text-foreground" href="/terms">
+              <Link className="hover:text-foreground" href="/terms-service">
                 Terms
-              </Link>
-              <Link className="hover:text-foreground" href="/cookies">
-                Cookies
-              </Link>
-              <Link className="hover:text-foreground" href="/sitemap">
-                Sitemap
               </Link>
             </div>
           </div>

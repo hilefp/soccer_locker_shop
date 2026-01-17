@@ -1,0 +1,21 @@
+{
+  "name": "Soccer Locker Team Shop",
+  "short_name": "Soccer Locker",
+  "description": "Choose your soccer club or academy below to view and order your official uniforms and fan gear.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ef4444",
+  "icons": [
+    {
+      "src": "/team-fav.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/team-fav.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

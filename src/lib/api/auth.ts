@@ -10,7 +10,11 @@ import type {
   ShopResetPasswordRequest,
 } from "~/lib/api/types";
 
-const SHOP_AUTH_BASE = "/shop/auth";
+const SHOP_AUTH_BASE = process.env.NEXT_SERVER_API_URL + "/api/shop/auth";
+
+if (!SHOP_AUTH_BASE) {
+  throw new Error("SHOP_AUTH_BASE is not configured");
+}
 
 /**
  * Register new shop customer

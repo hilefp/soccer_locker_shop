@@ -34,7 +34,7 @@ const getClientSession = async (): Promise<{
   user: ShopCustomer | null;
 }> => {
   try {
-    const response = await fetch("/api/auth/session");
+    const response = await fetch("/api/shop/auth/session");
     if (!response.ok) {
       return { token: null, user: null };
     }
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       setLoading(true);
       try {
         console.log("🔵 Starting login for:", email);
-        const response = await fetch("/api/auth/login", {
+        const response = await fetch("/api/shop/auth/login", {
           body: JSON.stringify({ email, password }),
           headers: { "Content-Type": "application/json" },
           method: "POST",
@@ -130,7 +130,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
     setLoading(true);
     try {
       console.log("🔵 Starting registration...");
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("/api/shop/auth/register", {
         body: JSON.stringify(data),
         headers: { "Content-Type": "application/json" },
         method: "POST",
@@ -160,7 +160,7 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
   const logout = React.useCallback(async () => {
     setLoading(true);
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await fetch("/api/shop/auth/logout", { method: "POST" });
 
       // Clear local state
       setUser(null);

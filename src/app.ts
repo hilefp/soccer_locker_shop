@@ -1,16 +1,27 @@
 export const SEO_CONFIG = {
   description:
-    "Soccer Locker is a robust ecommerce template built with next.js and other modern technologies. It's designed for developers who want a fast, modern, and scalable foundation without reinventing the backend.",
-  fullName: "Relivator Next.js Template",
-  name: "Relivator",
-  slogan: "Store which makes you happy.",
+    "Choose your soccer club or academy below to view and order your official uniforms and fan gear. Shop team logos to find uniforms for each team.",
+  fullName: "Soccer Locker Team Shop",
+  name: "Soccer Locker",
+  slogan: "Your official uniforms and fan gear destination.",
+  keywords: [
+    "soccer uniforms",
+    "team uniforms",
+    "soccer gear",
+    "fan gear",
+    "soccer academy",
+    "club uniforms",
+    "soccer jerseys",
+    "soccer apparel",
+  ],
+  siteUrl: "https://soccerlocker.com",
 };
 
 export const SYSTEM_CONFIG = {
-  redirectAfterSignIn: "/dashboard/uploads",
-  redirectAfterSignUp: "/dashboard/uploads",
-  repoName: "relivator",
-  repoOwner: "blefnk",
+  redirectAfterSignIn: "/dashboard",
+  redirectAfterSignUp: "/dashboard",
+  repoName: "soccer-locker-my-uniforms",
+  repoOwner: "soccer-locker-my-uniforms",
   repoStars: true,
 };
 

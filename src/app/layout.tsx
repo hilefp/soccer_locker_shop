@@ -26,8 +26,64 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  description: `${SEO_CONFIG.description}`,
-  title: `${SEO_CONFIG.fullName}`,
+  title: {
+    default: SEO_CONFIG.fullName,
+    template: `%s | ${SEO_CONFIG.name}`,
+  },
+  description: SEO_CONFIG.description,
+  keywords: SEO_CONFIG.keywords,
+  authors: [{ name: SEO_CONFIG.name }],
+  creator: SEO_CONFIG.name,
+  publisher: SEO_CONFIG.name,
+  metadataBase: new URL(SEO_CONFIG.siteUrl),
+  icons: {
+    icon: [
+      { url: "/team-fav.png", sizes: "32x32", type: "image/png" },
+      { url: "/team-fav.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: [
+      { url: "/team-fav.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/team-fav.png",
+  },
+  manifest: "/manifest.json",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: SEO_CONFIG.siteUrl,
+    siteName: SEO_CONFIG.name,
+    title: SEO_CONFIG.fullName,
+    description: SEO_CONFIG.description,
+    images: [
+      {
+        url: "/team-fav.png",
+        width: 512,
+        height: 512,
+        alt: SEO_CONFIG.name,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SEO_CONFIG.fullName,
+    description: SEO_CONFIG.description,
+    images: ["/team-fav.png"],
+    creator: "@soccerlocker",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  verification: {
+    google: "your-google-verification-code",
+  },
 };
 
 export default function RootLayout({

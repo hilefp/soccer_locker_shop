@@ -2,8 +2,6 @@ import {
   BarChart,
   LogOut,
   Settings,
-  Shield,
-  Upload,
   UserIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -106,18 +104,7 @@ export function HeaderUserDropdown({
             Settings
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link className="cursor-pointer" href="/dashboard/uploads">
-            <Upload className="mr-2 h-4 w-4" />
-            Uploads
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link className="cursor-pointer" href="/admin/summary">
-            <Shield className="mr-2 h-4 w-4" />
-            Admin
-          </Link>
-        </DropdownMenuItem>
+
         <DropdownMenuSeparator />
         <DropdownMenuItem
           asChild

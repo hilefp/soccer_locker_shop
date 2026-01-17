@@ -29,7 +29,9 @@ export function Header({ showAuth = true }: HeaderProps) {
 
   const mainNavigation = [
     { href: "/", name: "Home" },
-    { href: "/products", name: "Products" },
+    { href: "/teams", name: "Teams" },
+    { href: "/shipping-returns", name: "Shipping & Returns" },
+    { href: "/contact", name: "Contact" },
   ];
 
   const isDashboard = user && pathname.startsWith("/dashboard");
@@ -106,7 +108,7 @@ export function Header({ showAuth = true }: HeaderProps) {
             {loading ? (
               <Skeleton className="h-8 w-8 rounded-full" />
             ) : (
-              <NotificationsWidget />
+             ""
             )}
 
             {showAuth && (

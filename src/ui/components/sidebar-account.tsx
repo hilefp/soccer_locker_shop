@@ -3,6 +3,8 @@
 import {
   BarChart3,
   CreditCard,
+  Home,
+  MessageCircle,
   Package,
   Settings,
   Upload,
@@ -14,11 +16,11 @@ import { usePathname } from "next/navigation";
 import { cn } from "~/lib/cn";
 
 const dashboardNavigation = [
-  { href: "/dashboard/stats", icon: BarChart3, name: "Stats" },
+  { href: "/dashboard", icon: Home, name: "Dashboard" },
   { href: "/dashboard/profile", icon: User, name: "Profile" },
   { href: "/dashboard/orders", icon: Package, name: "Orders" },
-  { href: "/dashboard/billing", icon: CreditCard, name: "Billing" },
   { href: "/dashboard/settings", icon: Settings, name: "Settings" },
+  { href: "/contact", icon: MessageCircle, name: "Contact" },
 ];
 
 export function SidebarAccount() {

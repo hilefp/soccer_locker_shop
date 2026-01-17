@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+import { ProductModal } from "~/ui/components/product-modal";
 import type {
   ClubProduct,
+  ClubProductDetail,
   ClubProductFilters,
   ProductCategory,
 } from "~/lib/api/types";
@@ -27,6 +29,11 @@ export function ClubProductsSection({
   const [products, setProducts] = useState<ClubProduct[]>(initialProducts);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<ClubProductDetail | null>(null);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(false);
 
   const categoryGroups = [
     { id: null, label: "All Products" },
@@ -62,7 +69,7 @@ export function ClubProductsSection({
         const response = await fetch(
           `${apiUrl}/api/shop/clubs/${clubId}/products?${params.toString()}`
         );
-        const data = await response.json();
+        const data = (await response.json()) as { data?: ClubProduct[] };
         setProducts(data.data || []);
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -75,6 +82,41 @@ export function ClubProductsSection({
   }, [selectedCategory, clubId, initialProducts, products]);
 
   const displayedProducts = products;
+
+  // Handle product click - fetch details and open modal
+  const handleProductClick = async (product: ClubProduct) => {
+    setIsLoadingProduct(true);
+    setModalOpen(true);
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const response = await fetch(
+        `${apiUrl}/api/shop/clubs/${clubId}/products/${product.productId}`
+      );
+      const data = (await response.json()) as ClubProductDetail;
+      setSelectedProduct(data);
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+      setModalOpen(false);
+    } finally {
+      setIsLoadingProduct(false);
+    }
+  };
+
+  // Get display values for modal
+  const getDisplayName = () => {
+    if (!selectedProduct) return "";
+    return selectedProduct.name || selectedProduct.product.name;
+  };
+
+  const getDisplayImages = () => {
+    if (!selectedProduct) return [];
+    const images: string[] = [];
+    if (selectedProduct.imageUrls?.length) images.push(...selectedProduct.imageUrls);
+    if (selectedProduct.product.imageUrls?.length) images.push(...selectedProduct.product.imageUrls);
+    if (selectedProduct.product.imageUrl) images.push(selectedProduct.product.imageUrl);
+    return images;
+  };
 
   const activeCategoryLabel =
     categoryGroups.find((cat) => cat.id === selectedCategory)?.label ||
@@ -128,7 +170,11 @@ export function ClubProductsSection({
           ) : displayedProducts.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
               {displayedProducts.map((product) => (
-                <ClubProductCard key={product.id} product={product} />
+                <ClubProductCard
+                  key={product.id}
+                  product={product}
+                  onClick={() => handleProductClick(product)}
+                />
               ))}
             </div>
           ) : (
@@ -152,6 +198,28 @@ export function ClubProductsSection({
           )}
         </div>
       </section>
+
+      {/* Product Modal */}
+      <ProductModal
+        product={selectedProduct}
+        displayName={getDisplayName()}
+        displayImages={getDisplayImages()}
+        brandName={selectedProduct?.product.brand.name || ""}
+        categoryName={selectedProduct?.product.category.name || ""}
+        clubId={clubId}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+      />
+
+      {/* Loading overlay when fetching product details */}
+      {isLoadingProduct && modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="rounded-lg bg-background p-6">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <p className="mt-4 text-sm text-muted-foreground">Loading product...</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }
