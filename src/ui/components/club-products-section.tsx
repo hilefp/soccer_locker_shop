@@ -56,7 +56,7 @@ export function ClubProductsSection({
           isActive: true,
           sortBy: "createdAt" as any,
           sortOrder: "desc" as any,
-          categoryId: selectedCategory,
+          categoryId: selectedCategory ?? undefined,
         };
 
         const params = new URLSearchParams();

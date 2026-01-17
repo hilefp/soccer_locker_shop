@@ -7,20 +7,21 @@ import type { ProductCategory } from "~/lib/api/types";
 import { ClubProductsSection } from "~/ui/components/club-products-section";
 
 interface ClubPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ClubPage({ params }: ClubPageProps) {
-  const club = await getClubById(params.id);
+  const { id } = await params;
+  const club = await getClubById(id);
 
   if (!club) {
     notFound();
   }
 
   // Fetch initial products
-  const productsData = await getClubProducts(params.id, {
+  const productsData = await getClubProducts(id, {
     page: 1,
     limit: 50,
     isActive: true,
@@ -91,7 +92,7 @@ export default async function ClubPage({ params }: ClubPageProps) {
       {/* Products Section with Categories */}
       <ClubProductsSection
         categories={categories}
-        clubId={params.id}
+        clubId={id}
         clubName={club.name}
         initialProducts={productsData.data}
         initialTotal={productsData.meta.total}
