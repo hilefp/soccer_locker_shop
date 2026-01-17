@@ -31,12 +31,6 @@ export async function POST(
     // Register endpoint
     if (route === "register") {
       const body = (await request.json()) as ShopRegisterRequest;
-      console.log("📝 Register request:", {
-        email: body.email,
-        firstName: body.firstName,
-        lastName: body.lastName,
-        hasPassword: !!body.password,
-      });
 
       try {
         const authResponse = await registerShopCustomer(body);
@@ -44,7 +38,6 @@ export async function POST(
         // Set HTTP-only cookie
         await setAuthCookie(authResponse.accessToken);
 
-        console.log("✅ Registration successful for:", body.email);
         return NextResponse.json({
           success: true,
           token: authResponse.accessToken,

@@ -1,5 +1,6 @@
 import {
   BarChart,
+  Home,
   LogOut,
   Settings,
   UserIcon,
@@ -87,9 +88,9 @@ export function HeaderUserDropdown({
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link className="cursor-pointer" href="/dashboard/stats">
-            <BarChart className="mr-2 h-4 w-4" />
-            Stats
+          <Link className="cursor-pointer" href="/dashboard">
+            <Home className="mr-2 h-4 w-4" />
+            Dashboard
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

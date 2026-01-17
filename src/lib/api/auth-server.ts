@@ -21,19 +21,16 @@ export async function verifyToken(
   try {
     // First, decode without verification to see what's inside
     const decoded = jose.decodeJwt(token);
-    console.log("🔓 JWT decoded (unverified):", decoded);
 
     const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jose.jwtVerify(token, secret);
 
-    console.log("✅ JWT verified successfully");
     return payload as unknown as JWTPayload;
   } catch (error) {
     console.error("❌ JWT verification failed:", error);
     // Also decode to see what was in the token
     try {
       const decoded = jose.decodeJwt(token);
-      console.log("🔓 Failed token contents:", decoded);
     } catch (decodeError) {
       console.error("Failed to decode token:", decodeError);
     }
@@ -76,7 +73,6 @@ export async function getSession(): Promise<{
     return null;
   }
 
-  console.log("🔍 getSession: Token found, verifying...");
   const payload = await verifyToken(token);
   if (!payload) {
     // Token is invalid - return null without modifying cookies
@@ -85,9 +81,7 @@ export async function getSession(): Promise<{
     return null;
   }
 
-  console.log("🔍 getSession: Token verified, payload:", payload);
   const user = jwtPayloadToUser(payload);
-  console.log("🔍 getSession: Converted to user:", user);
 
   return {
     token,

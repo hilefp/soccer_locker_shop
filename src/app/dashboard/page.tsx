@@ -1,7 +1,9 @@
-import { redirect } from "next/navigation";
+import { getCurrentUser } from "~/lib/auth";
 
-import { SYSTEM_CONFIG } from "~/app";
+import { DashboardPageClient } from "./page.client";
 
-export default function DashboardPage() {
-  return redirect(SYSTEM_CONFIG.redirectAfterSignIn);
+export default async function DashboardPage() {
+  const user = await getCurrentUser();
+
+  return <DashboardPageClient user={user} />;
 }
