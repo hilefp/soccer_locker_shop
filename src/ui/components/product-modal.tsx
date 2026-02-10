@@ -152,14 +152,14 @@ export function ProductModal({
 
             {/* Thumbnails */}
             {displayImages.length > 1 && (
-              <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
-                {displayImages.map((image, index) => (
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-2 justify-center">
+                {Array.from(new Set(displayImages)).map((image, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImageIndex(index)}
+                    onClick={() => setSelectedImageIndex(displayImages.indexOf(image))}
                     className={cn(
                       "relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border-2 bg-background transition-all",
-                      selectedImageIndex === index
+                      selectedImageIndex === displayImages.indexOf(image)
                         ? "border-primary ring-2 ring-primary/20"
                         : "border-transparent hover:border-muted-foreground/50"
                     )}

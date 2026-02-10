@@ -63,6 +63,7 @@ export function ClubProductClient({
         price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
         image: displayImages[0] || "",
         category: categoryName,
+        variantId: selectedVariant.id,
       },
       quantity
     );

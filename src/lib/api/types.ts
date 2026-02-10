@@ -341,3 +341,54 @@ export interface ClubProductFilters {
   sortOrder?: SortOrder;
   tags?: string;
 }
+
+// Cart Types (Server-side cart)
+export interface ServerCartItem {
+  id: string;
+  cartId: string;
+  productVariantId: string;
+  quantity: number;
+  price: string;
+  variant?: ProductVariant;
+}
+
+export interface ServerCart {
+  id: string;
+  customerId: string;
+  items: ServerCartItem[];
+}
+
+// Checkout Types
+export interface CheckoutRequest {
+  billingFirstName: string;
+  billingLastName: string;
+  billingCompany?: string;
+  billingCountry: string;
+  billingAddress1: string;
+  billingAddress2?: string;
+  billingCity: string;
+  billingState: string;
+  billingPostalCode: string;
+  billingPhone?: string;
+  billingEmail: string;
+  shippingFirstName?: string;
+  shippingLastName?: string;
+  shippingCompany?: string;
+  shippingCountry?: string;
+  shippingAddress1?: string;
+  shippingAddress2?: string;
+  shippingCity?: string;
+  shippingState?: string;
+  shippingPostalCode?: string;
+  shippingPhone?: string;
+  shippingEmail?: string;
+  sourceId: string;
+}
+
+export interface CheckoutResponse {
+  orderId: string;
+  paymentId: string;
+  paymentStatus: string;
+  paymentReceiptUrl?: string;
+  message: string;
+}

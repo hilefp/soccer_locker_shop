@@ -11,6 +11,7 @@ export default {
       { hostname: "**.ufs.sh", protocol: "https" },
       { hostname: "**.unsplash.com", protocol: "https" },
       { hostname: "**.soccerlocker.com", protocol: "https" },
+      { hostname: "myuniformsoccerlocker.com", protocol: "https" },
       { hostname: "api.github.com", protocol: "https" },
       { hostname: "utfs.io", protocol: "https" },
       { hostname: "soccerlocker-demo.s3.us-east-1.amazonaws.com", protocol: "https" },
