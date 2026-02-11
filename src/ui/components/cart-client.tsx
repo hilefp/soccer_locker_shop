@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Minus, Plus, ShoppingCart, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { cn } from "~/lib/cn";
@@ -41,6 +42,7 @@ interface CartProps {
 }
 
 export function CartClient({ className }: CartProps) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = React.useState(false);
   const [isMounted, setIsMounted] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -69,6 +71,11 @@ export function CartClient({ className }: CartProps) {
 
   const handleClearCart = () => {
     clearCart();
+  };
+
+  const handleCheckout = () => {
+    setIsOpen(false);
+    router.push("/checkout");
   };
 
   const CartTrigger = (
@@ -274,7 +281,7 @@ export function CartClient({ className }: CartProps) {
                   ${subtotal.toFixed(2)}
                 </span>
               </div>
-              <Button className="w-full" size="lg">
+              <Button className="w-full" onClick={handleCheckout} size="lg">
                 Checkout
               </Button>
               <div className="flex items-center justify-between">

@@ -9,6 +9,7 @@ export interface CartItem {
   name: string;
   price: number;
   quantity: number;
+  variantId?: string;
 }
 
 interface CartProps {
