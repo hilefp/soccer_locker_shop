@@ -34,6 +34,7 @@ export function Header({ showAuth = true }: HeaderProps) {
   const mainNavigation = [
     { href: "/", name: "Home" },
     { href: "/teams", name: "Teams" },
+    { href: "/track-order", name: "Track Order" },
     { href: "/shipping-returns", name: "Shipping & Returns" },
     { href: "/contact", name: "Contact" },
   ];
