@@ -392,3 +392,70 @@ export interface CheckoutResponse {
   paymentReceiptUrl?: string;
   message: string;
 }
+// Order Types
+export interface OrderItem {
+  id: string;
+  orderId: string;
+  productVariantId: string;
+  name: string;
+  sku: string;
+  attributes: Record<string, string> | null;
+  quantity: number;
+  unitPrice: string;
+  totalPrice: string;
+  createdAt: string;
+}
+
+export interface OrderStatusHistory {
+  id: string;
+  orderId: string;
+  fromStatus: string;
+  toStatus: string;
+  changedByUserId: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface Order {
+  id: string;
+  orderNumber: string;
+  clubId: string | null;
+  customerUserId: string | null;
+  assignedInventoryUserId: string | null;
+  status: string;
+  subtotal: string;
+  taxTotal: string;
+  shippingTotal: string;
+  total: string;
+  currency: string;
+  shippingName: string;
+  shippingPhone: string;
+  shippingAddress1: string;
+  shippingAddress2: string | null;
+  shippingCity: string;
+  shippingState: string;
+  shippingPostalCode: string;
+  shippingCountry: string;
+  carrier: string | null;
+  trackingNumber: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  printedAt: string | null;
+  pickedAt: string | null;
+  processedAt: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items?: OrderItem[];
+  statusHistory?: OrderStatusHistory[];
+}
+
+export interface OrderTimelineStep {
+  status: string;
+  label: string;
+  description: string;
+  date: string | null;
+  completed: boolean;
+  isActive: boolean;
+  trackingNumber?: string;
+}
