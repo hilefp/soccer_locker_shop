@@ -102,6 +102,8 @@ export function ProductModal({
         price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
         image: displayImages[0] || "",
         category: categoryName,
+        clubId,
+        variantId: selectedVariant.id,
       },
       quantity,
     );

@@ -162,7 +162,7 @@ export function ConfirmPageClient() {
                 <div className="flex items-center justify-between">
                   <span className="text-base font-semibold">Total Paid</span>
                   <span className="text-base font-semibold">
-                    ${parseFloat(orderData.total).toFixed(2)}
+                    ${(Number(orderData.total) || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -170,7 +170,7 @@ export function ConfirmPageClient() {
           )}
 
           <div className="flex flex-col gap-3 pt-4">
-            <Link href="/order-status">
+            <Link href={`/track-order?orderNumber=${orderData?.orderNumber || ""}`}>
               <Button className="w-full" size="lg">
                 Track Your Order
               </Button>

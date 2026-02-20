@@ -127,6 +127,9 @@ export function CheckoutPageClient() {
   /* ---------------------- Form submission -------------------------------- */
   const onSubmit = async (data: CheckoutFormData) => {
     try {
+      // Use the clubId from the first cart item (all items belong to the same club)
+      const clubId = items.find((i) => i.clubId)?.clubId;
+
       const payload: CheckoutRequest = {
         shipping: {
           name: `${data.shipping.firstName} ${data.shipping.lastName}`.trim(),
@@ -138,6 +141,7 @@ export function CheckoutPageClient() {
           postalCode: data.shipping.postalCode,
           country: data.shipping.country,
         },
+        clubId,
         notes: data.notes || undefined,
       };
 

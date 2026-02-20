@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "~/ui/primitives/button";
 import { Input } from "~/ui/primitives/input";
@@ -11,18 +12,18 @@ import { getOrderTimeline, getEstimatedDelivery } from "~/lib/utils/order-timeli
 import type { Order, ApiResponse } from "~/lib/api/types";
 
 export default function TrackOrderPage() {
+  const searchParams = useSearchParams();
   const [orderNumber, setOrderNumber] = useState("");
   const [orderData, setOrderData] = useState<Order | null>(null);
   const [error, setError] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const fetchOrder = useCallback(async (number: string) => {
     setError("");
     setIsSearching(true);
 
     try {
-      const response = await fetch(`/api/orders/${orderNumber.toUpperCase()}`);
+      const response = await fetch(`/api/orders/${number.toUpperCase()}`);
 
       if (!response.ok) {
         const errorData = await response.json() as ApiResponse<Order>;
@@ -42,6 +43,20 @@ export default function TrackOrderPage() {
     } finally {
       setIsSearching(false);
     }
+  }, []);
+
+  // Auto-search when orderNumber is provided via query param
+  useEffect(() => {
+    const paramOrderNumber = searchParams.get("orderNumber");
+    if (paramOrderNumber) {
+      setOrderNumber(paramOrderNumber);
+      void fetchOrder(paramOrderNumber);
+    }
+  }, [searchParams, fetchOrder]);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await fetchOrder(orderNumber);
   };
 
   return (
