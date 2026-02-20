@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle2, Loader2, ShoppingCart } from "lucide-react";
+import { Loader2, Package, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
@@ -12,7 +12,6 @@ import { apiDelete, apiPost } from "~/lib/api/client";
 import type { CheckoutRequest, CheckoutResponse } from "~/lib/api/types";
 import { useAuth } from "~/lib/hooks/use-auth";
 import { useCart } from "~/lib/hooks/use-cart";
-import { useSquarePayments } from "~/lib/hooks/use-square-payments";
 import {
   checkoutSchema,
   type CheckoutFormData,
@@ -24,167 +23,20 @@ import {
   CardHeader,
   CardTitle,
 } from "~/ui/primitives/card";
-import { Checkbox } from "~/ui/primitives/checkbox";
 import { Input } from "~/ui/primitives/input";
 import { Label } from "~/ui/primitives/label";
 import { Separator } from "~/ui/primitives/separator";
+import { Textarea } from "~/ui/primitives/textarea";
 
 /* -------------------------------------------------------------------------- */
-/*                           Address Form Fields                              */
+/*                           Shipping Calculator                              */
 /* -------------------------------------------------------------------------- */
 
-function AddressFields({
-  errors,
-  prefix,
-  register,
-}: {
-  errors: Record<string, { message?: string }> | undefined;
-  prefix: "billing" | "shipping";
-  register: ReturnType<typeof useForm<CheckoutFormData>>["register"];
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor={`${prefix}.firstName`}>First Name *</Label>
-          <Input
-            id={`${prefix}.firstName`}
-            placeholder="John"
-            {...register(`${prefix}.firstName`)}
-          />
-          {errors?.firstName && (
-            <p className="text-sm text-destructive">
-              {errors.firstName.message}
-            </p>
-          )}
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor={`${prefix}.lastName`}>Last Name *</Label>
-          <Input
-            id={`${prefix}.lastName`}
-            placeholder="Doe"
-            {...register(`${prefix}.lastName`)}
-          />
-          {errors?.lastName && (
-            <p className="text-sm text-destructive">
-              {errors.lastName.message}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor={`${prefix}.company`}>Company (Optional)</Label>
-        <Input
-          id={`${prefix}.company`}
-          placeholder="Acme Inc"
-          {...register(`${prefix}.company`)}
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor={`${prefix}.email`}>Email *</Label>
-        <Input
-          id={`${prefix}.email`}
-          placeholder="john@example.com"
-          type="email"
-          {...register(`${prefix}.email`)}
-        />
-        {errors?.email && (
-          <p className="text-sm text-destructive">{errors.email.message}</p>
-        )}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor={`${prefix}.phone`}>Phone (Optional)</Label>
-        <Input
-          id={`${prefix}.phone`}
-          placeholder="+1 (555) 123-4567"
-          type="tel"
-          {...register(`${prefix}.phone`)}
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor={`${prefix}.address1`}>Address *</Label>
-        <Input
-          id={`${prefix}.address1`}
-          placeholder="123 Main St"
-          {...register(`${prefix}.address1`)}
-        />
-        {errors?.address1 && (
-          <p className="text-sm text-destructive">
-            {errors.address1.message}
-          </p>
-        )}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor={`${prefix}.address2`}>
-          Apartment, suite, etc. (Optional)
-        </Label>
-        <Input
-          id={`${prefix}.address2`}
-          placeholder="Apt 4B"
-          {...register(`${prefix}.address2`)}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor={`${prefix}.city`}>City *</Label>
-          <Input
-            id={`${prefix}.city`}
-            placeholder="New York"
-            {...register(`${prefix}.city`)}
-          />
-          {errors?.city && (
-            <p className="text-sm text-destructive">{errors.city.message}</p>
-          )}
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor={`${prefix}.state`}>State *</Label>
-          <Input
-            id={`${prefix}.state`}
-            placeholder="NY"
-            {...register(`${prefix}.state`)}
-          />
-          {errors?.state && (
-            <p className="text-sm text-destructive">{errors.state.message}</p>
-          )}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="grid gap-2">
-          <Label htmlFor={`${prefix}.country`}>Country *</Label>
-          <Input
-            id={`${prefix}.country`}
-            placeholder="USA"
-            {...register(`${prefix}.country`)}
-          />
-          {errors?.country && (
-            <p className="text-sm text-destructive">
-              {errors.country.message}
-            </p>
-          )}
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor={`${prefix}.postalCode`}>Postal Code *</Label>
-          <Input
-            id={`${prefix}.postalCode`}
-            placeholder="10001"
-            {...register(`${prefix}.postalCode`)}
-          />
-          {errors?.postalCode && (
-            <p className="text-sm text-destructive">
-              {errors.postalCode.message}
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+function calculateShipping(totalItems: number): number {
+  if (totalItems <= 0) return 0;
+  if (totalItems <= 2) return 7.99;
+  if (totalItems <= 12) return 11.99;
+  return 14.99;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -192,24 +44,21 @@ function AddressFields({
 /* -------------------------------------------------------------------------- */
 
 export function CheckoutPageClient() {
-  const { user } = useAuth();
-  const { items, subtotal, clearCart } = useCart();
-  const { cardRef, isReady, error: squareError, tokenize } = useSquarePayments();
+  const { user, loading: authLoading } = useAuth();
+  const { items, subtotal, itemCount } = useCart();
 
   const [cartSyncing, setCartSyncing] = React.useState(false);
-  const [cartSynced, setCartSynced] = React.useState(false);
-  const [orderComplete, setOrderComplete] = React.useState(false);
-  const [orderId, setOrderId] = React.useState<string | null>(null);
+
+  const shippingCost = calculateShipping(itemCount);
+  const total = subtotal + shippingCost;
 
   const {
     register,
     handleSubmit,
-    watch,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormData>({
     defaultValues: {
-      billing: {
+      shipping: {
         firstName: user?.profile?.firstName || "",
         lastName: user?.profile?.lastName || "",
         company: user?.profile?.companyName || "",
@@ -222,25 +71,26 @@ export function CheckoutPageClient() {
         country: user?.profile?.country || "",
         postalCode: user?.profile?.postalCode || "",
       },
-      shipToDifferentAddress: false,
-      shipping: {},
+      notes: "",
     },
     resolver: zodResolver(checkoutSchema),
   });
-
-  const shipToDifferent = watch("shipToDifferentAddress");
 
   /* ---------------------- Cart sync on mount ----------------------------- */
   const itemsRef = React.useRef(items);
   itemsRef.current = items;
 
   React.useEffect(() => {
+    if (authLoading || !user) return;
+
     const currentItems = itemsRef.current;
     if (currentItems.length === 0) return;
 
     let cancelled = false;
 
     async function syncCart() {
+        console.log("🔑 token in localStorage:", localStorage.getItem("auth-token"));
+
       setCartSyncing(true);
       try {
         await apiDelete("/api/shop/cart");
@@ -255,7 +105,6 @@ export function CheckoutPageClient() {
         }
 
         if (!cancelled) {
-          setCartSynced(true);
         }
       } catch (err) {
         if (!cancelled) {
@@ -273,41 +122,24 @@ export function CheckoutPageClient() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authLoading]);
 
   /* ---------------------- Form submission -------------------------------- */
   const onSubmit = async (data: CheckoutFormData) => {
     try {
-      const sourceId = await tokenize();
-
       const payload: CheckoutRequest = {
-        billingFirstName: data.billing.firstName,
-        billingLastName: data.billing.lastName,
-        billingCompany: data.billing.company || undefined,
-        billingCountry: data.billing.country,
-        billingAddress1: data.billing.address1,
-        billingAddress2: data.billing.address2 || undefined,
-        billingCity: data.billing.city,
-        billingState: data.billing.state,
-        billingPostalCode: data.billing.postalCode,
-        billingPhone: data.billing.phone || undefined,
-        billingEmail: data.billing.email,
-        ...(data.shipToDifferentAddress && data.shipping
-          ? {
-              shippingFirstName: data.shipping.firstName,
-              shippingLastName: data.shipping.lastName,
-              shippingCompany: data.shipping.company || undefined,
-              shippingCountry: data.shipping.country,
-              shippingAddress1: data.shipping.address1,
-              shippingAddress2: data.shipping.address2 || undefined,
-              shippingCity: data.shipping.city,
-              shippingState: data.shipping.state,
-              shippingPostalCode: data.shipping.postalCode,
-              shippingPhone: data.shipping.phone || undefined,
-              shippingEmail: data.shipping.email || undefined,
-            }
-          : {}),
-        sourceId,
+        shippingFirstName: data.shipping.firstName,
+        shippingLastName: data.shipping.lastName,
+        shippingCompany: data.shipping.company || undefined,
+        shippingCountry: data.shipping.country,
+        shippingAddress1: data.shipping.address1,
+        shippingAddress2: data.shipping.address2 || undefined,
+        shippingCity: data.shipping.city,
+        shippingState: data.shipping.state,
+        shippingPostalCode: data.shipping.postalCode,
+        shippingPhone: data.shipping.phone || undefined,
+        shippingEmail: data.shipping.email,
+        notes: data.notes || undefined,
       };
 
       const result = await apiPost<CheckoutResponse>(
@@ -315,43 +147,17 @@ export function CheckoutPageClient() {
         payload,
       );
 
-      clearCart();
-      setOrderComplete(true);
-      setOrderId(result.orderId);
-      toast.success("Order placed successfully!");
+      // Redirect to Square hosted checkout page
+      window.location.href = result.checkoutUrl;
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Checkout failed. Please try again.",
+        err instanceof Error
+          ? err.message
+          : "Checkout failed. Please try again.",
       );
       console.error("Checkout error:", err);
     }
   };
-
-  /* ---------------------- Order confirmation view ------------------------ */
-  if (orderComplete) {
-    return (
-      <div className="container mx-auto max-w-7xl px-4 py-16 md:px-6">
-        <Card className="mx-auto max-w-lg">
-          <CardContent className="flex flex-col items-center py-12 text-center">
-            <CheckCircle2 className="mb-4 h-16 w-16 text-green-500" />
-            <h2 className="mb-2 text-2xl font-bold">Order Confirmed!</h2>
-            {orderId && (
-              <p className="mb-2 text-sm text-muted-foreground">
-                Order #{orderId}
-              </p>
-            )}
-            <p className="mb-8 text-muted-foreground">
-              Thank you for your purchase. You will receive a confirmation email
-              shortly.
-            </p>
-            <Link href="/">
-              <Button size="lg">Continue Shopping</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   /* ---------------------- Empty cart view -------------------------------- */
   if (items.length === 0 && !cartSyncing) {
@@ -397,93 +203,202 @@ export function CheckoutPageClient() {
             className="space-y-6"
             onSubmit={handleSubmit(onSubmit)}
           >
-            {/* Billing Address */}
+            {/* Shipping Address */}
             <Card>
               <CardHeader>
-                <CardTitle>Billing Address</CardTitle>
+                <CardTitle>Shipping Address</CardTitle>
               </CardHeader>
               <CardContent>
-                <AddressFields
-                  errors={
-                    errors.billing as
-                      | Record<string, { message?: string }>
-                      | undefined
-                  }
-                  prefix="billing"
-                  register={register}
-                />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping.firstName">First Name *</Label>
+                      <Input
+                        id="shipping.firstName"
+                        placeholder="John"
+                        {...register("shipping.firstName")}
+                      />
+                      {errors.shipping?.firstName && (
+                        <p className="text-sm text-destructive">
+                          {errors.shipping.firstName.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping.lastName">Last Name *</Label>
+                      <Input
+                        id="shipping.lastName"
+                        placeholder="Doe"
+                        {...register("shipping.lastName")}
+                      />
+                      {errors.shipping?.lastName && (
+                        <p className="text-sm text-destructive">
+                          {errors.shipping.lastName.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="shipping.company">Company (Optional)</Label>
+                    <Input
+                      id="shipping.company"
+                      placeholder="Acme Inc"
+                      {...register("shipping.company")}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="shipping.email">Email *</Label>
+                    <Input
+                      id="shipping.email"
+                      placeholder="john@example.com"
+                      type="email"
+                      {...register("shipping.email")}
+                    />
+                    {errors.shipping?.email && (
+                      <p className="text-sm text-destructive">
+                        {errors.shipping.email.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="shipping.phone">Phone (Optional)</Label>
+                    <Input
+                      id="shipping.phone"
+                      placeholder="+1 (555) 123-4567"
+                      type="tel"
+                      {...register("shipping.phone")}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="shipping.address1">Address *</Label>
+                    <Input
+                      id="shipping.address1"
+                      placeholder="123 Main St"
+                      {...register("shipping.address1")}
+                    />
+                    {errors.shipping?.address1 && (
+                      <p className="text-sm text-destructive">
+                        {errors.shipping.address1.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="shipping.address2">
+                      Apartment, suite, etc. (Optional)
+                    </Label>
+                    <Input
+                      id="shipping.address2"
+                      placeholder="Apt 4B"
+                      {...register("shipping.address2")}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping.city">City *</Label>
+                      <Input
+                        id="shipping.city"
+                        placeholder="New York"
+                        {...register("shipping.city")}
+                      />
+                      {errors.shipping?.city && (
+                        <p className="text-sm text-destructive">
+                          {errors.shipping.city.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping.state">State *</Label>
+                      <Input
+                        id="shipping.state"
+                        placeholder="NY"
+                        {...register("shipping.state")}
+                      />
+                      {errors.shipping?.state && (
+                        <p className="text-sm text-destructive">
+                          {errors.shipping.state.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping.country">Country *</Label>
+                      <Input
+                        id="shipping.country"
+                        placeholder="USA"
+                        {...register("shipping.country")}
+                      />
+                      {errors.shipping?.country && (
+                        <p className="text-sm text-destructive">
+                          {errors.shipping.country.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="shipping.postalCode">
+                        Postal Code *
+                      </Label>
+                      <Input
+                        id="shipping.postalCode"
+                        placeholder="10001"
+                        {...register("shipping.postalCode")}
+                      />
+                      {errors.shipping?.postalCode && (
+                        <p className="text-sm text-destructive">
+                          {errors.shipping.postalCode.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
-            {/* Shipping toggle */}
-            <div className="flex items-center gap-3">
-              <Checkbox
-                checked={shipToDifferent}
-                id="shipToDifferentAddress"
-                onCheckedChange={(checked) =>
-                  setValue("shipToDifferentAddress", checked === true)
-                }
-              />
-              <Label htmlFor="shipToDifferentAddress">
-                Ship to a different address
-              </Label>
-            </div>
-
-            {/* Shipping Address (conditional) */}
-            {shipToDifferent && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Shipping Address</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <AddressFields
-                    errors={
-                      errors.shipping as
-                        | Record<string, { message?: string }>
-                        | undefined
-                    }
-                    prefix="shipping"
-                    register={register}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Payment */}
+            {/* Order Notes */}
             <Card>
               <CardHeader>
-                <CardTitle>Payment</CardTitle>
+                <CardTitle>Order Notes (Optional)</CardTitle>
               </CardHeader>
               <CardContent>
-                <div
-                  className="min-h-[90px] rounded-md"
-                  id="card-container"
-                  ref={cardRef}
-                />
-                {squareError && (
-                  <p className="mt-2 text-sm text-destructive">
-                    {squareError}
-                  </p>
-                )}
-                {!isReady && !squareError && (
-                  <div className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading payment form...
-                  </div>
-                )}
+                <div className="grid gap-2">
+                  <Label htmlFor="notes">
+                    Special instructions for your order
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="e.g. Leave at front door, gift wrap, special sizing notes..."
+                    rows={4}
+                    {...register("notes")}
+                  />
+                </div>
               </CardContent>
             </Card>
 
             {/* Submit */}
             <Button
               className="w-full"
-              disabled={isSubmitting || !cartSynced}
+              disabled={isSubmitting || cartSyncing}
               size="lg"
               type="submit"
             >
-              {isSubmitting
-                ? "Processing..."
-                : `Pay $${subtotal.toFixed(2)}`}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Redirecting to payment...
+                </>
+              ) : (
+                <>
+                  <Package className="mr-2 h-4 w-4" />
+                  Proceed to Payment — ${total.toFixed(2)}
+                </>
+              )}
             </Button>
           </form>
         </div>
@@ -529,8 +444,10 @@ export function CheckoutPageClient() {
                 <span className="font-medium">${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Shipping</span>
-                <span className="font-medium">Calculated at checkout</span>
+                <span className="text-muted-foreground">
+                  Shipping ({itemCount} {itemCount === 1 ? "item" : "items"})
+                </span>
+                <span className="font-medium">${shippingCost.toFixed(2)}</span>
               </div>
 
               <Separator />
@@ -538,8 +455,15 @@ export function CheckoutPageClient() {
               <div className="flex items-center justify-between">
                 <span className="text-base font-semibold">Total</span>
                 <span className="text-base font-semibold">
-                  ${subtotal.toFixed(2)}
+                  ${total.toFixed(2)}
                 </span>
+              </div>
+
+              <div className="rounded-md bg-muted/50 p-3">
+                <p className="text-xs text-muted-foreground">
+                  You will be redirected to Square&apos;s secure payment page to
+                  complete your purchase.
+                </p>
               </div>
             </CardContent>
           </Card>

@@ -358,38 +358,37 @@ export interface ServerCart {
   items: ServerCartItem[];
 }
 
-// Checkout Types
+// Checkout Types (Square redirect flow)
 export interface CheckoutRequest {
-  billingFirstName: string;
-  billingLastName: string;
-  billingCompany?: string;
-  billingCountry: string;
-  billingAddress1: string;
-  billingAddress2?: string;
-  billingCity: string;
-  billingState: string;
-  billingPostalCode: string;
-  billingPhone?: string;
-  billingEmail: string;
-  shippingFirstName?: string;
-  shippingLastName?: string;
+  shippingFirstName: string;
+  shippingLastName: string;
   shippingCompany?: string;
-  shippingCountry?: string;
-  shippingAddress1?: string;
+  shippingCountry: string;
+  shippingAddress1: string;
   shippingAddress2?: string;
-  shippingCity?: string;
-  shippingState?: string;
-  shippingPostalCode?: string;
+  shippingCity: string;
+  shippingState: string;
+  shippingPostalCode: string;
   shippingPhone?: string;
-  shippingEmail?: string;
-  sourceId: string;
+  shippingEmail: string;
+  notes?: string;
 }
 
 export interface CheckoutResponse {
   orderId: string;
-  paymentId: string;
-  paymentStatus: string;
-  paymentReceiptUrl?: string;
+  checkoutUrl: string;
+  message: string;
+}
+
+export interface ConfirmCheckoutRequest {
+  orderId: string;
+}
+
+export interface ConfirmCheckoutResponse {
+  orderId: string;
+  orderNumber: string;
+  status: string;
+  total: string;
   message: string;
 }
 // Order Types
