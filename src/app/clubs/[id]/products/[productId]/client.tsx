@@ -29,7 +29,8 @@ export function ClubProductClient({
 }: ClubProductClientProps) {
   const { addItem } = useCart();
 
-  const [selectedVariant, setSelectedVariant] = React.useState<ProductVariant | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    React.useState<ProductVariant | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
   const [quantity, setQuantity] = React.useState(1);
   const [isAdding, setIsAdding] = React.useState(false);
@@ -37,12 +38,15 @@ export function ClubProductClient({
   // Group variants by Size Type
   const variantsByType = React.useMemo(() => {
     if (!product?.product.variants) return {};
-    return product.product.variants.reduce((acc, variant) => {
-      const sizeType = variant.attributes["Size Type"] || "Standard";
-      if (!acc[sizeType]) acc[sizeType] = [];
-      acc[sizeType].push(variant);
-      return acc;
-    }, {} as Record<string, ProductVariant[]>);
+    return product.product.variants.reduce(
+      (acc, variant) => {
+        const sizeType = variant.attributes["Size Type"] || "Standard";
+        if (!acc[sizeType]) acc[sizeType] = [];
+        acc[sizeType].push(variant);
+        return acc;
+      },
+      {} as Record<string, ProductVariant[]>,
+    );
   }, [product]);
 
   const sizeTypes = Object.keys(variantsByType);
@@ -58,19 +62,27 @@ export function ClubProductClient({
 
     addItem(
       {
-        id: `${product.id}-${selectedVariant.id}`,
+        id: `${selectedVariant.id}`,
         name: `${displayName} - ${sizeLabel}`,
         price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
         image: displayImages[0] || "",
         category: categoryName,
         variantId: selectedVariant.id,
       },
-      quantity
+      quantity,
     );
     toast.success(`${displayName} added to cart`);
     await new Promise((r) => setTimeout(r, 400));
     setIsAdding(false);
-  }, [addItem, product, selectedVariant, displayName, displayImages, categoryName, quantity]);
+  }, [
+    addItem,
+    product,
+    selectedVariant,
+    displayName,
+    displayImages,
+    categoryName,
+    quantity,
+  ]);
 
   return (
     <>
@@ -87,7 +99,7 @@ export function ClubProductClient({
                   "relative h-20 w-20 overflow-hidden rounded-lg border-2 bg-muted transition-all",
                   selectedImageIndex === index
                     ? "border-primary"
-                    : "border-transparent hover:border-muted-foreground/50"
+                    : "border-transparent hover:border-muted-foreground/50",
                 )}
               >
                 <Image
@@ -131,7 +143,9 @@ export function ClubProductClient({
 
         {/* Price */}
         <div className="mt-4">
-          <span className="text-2xl font-bold text-primary">{product.price}</span>
+          <span className="text-2xl font-bold text-primary">
+            {product.price}
+          </span>
         </div>
 
         {/* Category */}
@@ -147,7 +161,9 @@ export function ClubProductClient({
           <div className="mt-6 space-y-4">
             {sizeTypes.map((type) => (
               <div key={type}>
-                <span className="text-sm font-medium text-muted-foreground">{type}</span>
+                <span className="text-sm font-medium text-muted-foreground">
+                  {type}
+                </span>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {variantsByType[type].map((variant) => (
                     <button
@@ -157,7 +173,7 @@ export function ClubProductClient({
                         "min-w-[3rem] rounded-md border px-3 py-2 text-sm font-medium transition-all",
                         selectedVariant?.id === variant.id
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-background hover:border-primary hover:bg-accent"
+                          : "border-border bg-background hover:border-primary hover:bg-accent",
                       )}
                     >
                       {variant.attributes["Size"]}

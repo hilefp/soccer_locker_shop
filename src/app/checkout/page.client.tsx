@@ -128,17 +128,16 @@ export function CheckoutPageClient() {
   const onSubmit = async (data: CheckoutFormData) => {
     try {
       const payload: CheckoutRequest = {
-        shippingFirstName: data.shipping.firstName,
-        shippingLastName: data.shipping.lastName,
-        shippingCompany: data.shipping.company || undefined,
-        shippingCountry: data.shipping.country,
-        shippingAddress1: data.shipping.address1,
-        shippingAddress2: data.shipping.address2 || undefined,
-        shippingCity: data.shipping.city,
-        shippingState: data.shipping.state,
-        shippingPostalCode: data.shipping.postalCode,
-        shippingPhone: data.shipping.phone || undefined,
-        shippingEmail: data.shipping.email,
+        shipping: {
+          name: `${data.shipping.firstName} ${data.shipping.lastName}`.trim(),
+          phone: data.shipping.phone || undefined,
+          address1: data.shipping.address1,
+          address2: data.shipping.address2 || undefined,
+          city: data.shipping.city,
+          state: data.shipping.state,
+          postalCode: data.shipping.postalCode,
+          country: data.shipping.country,
+        },
         notes: data.notes || undefined,
       };
 

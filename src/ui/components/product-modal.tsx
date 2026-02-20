@@ -41,15 +41,17 @@ export function ProductModal({
   const { addItem } = useCart();
   const { resolvedTheme } = useTheme();
 
-  const [selectedVariant, setSelectedVariant] = React.useState<ProductVariant | null>(null);
+  const [selectedVariant, setSelectedVariant] =
+    React.useState<ProductVariant | null>(null);
   const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
   const [quantity, setQuantity] = React.useState(1);
   const [isAdding, setIsAdding] = React.useState(false);
 
   // Dark mode logo
-  const logoSrc = resolvedTheme === "dark"
-    ? "/soccerlocker-team-logo-black.png"
-    : "/soccerlocker-team-logo.png";
+  const logoSrc =
+    resolvedTheme === "dark"
+      ? "/soccerlocker-team-logo-black.png"
+      : "/soccerlocker-team-logo.png";
 
   // Reset state when modal opens with new product
   React.useEffect(() => {
@@ -63,12 +65,15 @@ export function ProductModal({
   // Group variants by Size Type
   const variantsByType = React.useMemo(() => {
     if (!product?.product.variants) return {};
-    return product.product.variants.reduce((acc, variant) => {
-      const sizeType = variant.attributes["Size Type"] || "Standard";
-      if (!acc[sizeType]) acc[sizeType] = [];
-      acc[sizeType].push(variant);
-      return acc;
-    }, {} as Record<string, ProductVariant[]>);
+    return product.product.variants.reduce(
+      (acc, variant) => {
+        const sizeType = variant.attributes["Size Type"] || "Standard";
+        if (!acc[sizeType]) acc[sizeType] = [];
+        acc[sizeType].push(variant);
+        return acc;
+      },
+      {} as Record<string, ProductVariant[]>,
+    );
   }, [product]);
 
   const sizeTypes = Object.keys(variantsByType);
@@ -92,24 +97,33 @@ export function ProductModal({
 
     addItem(
       {
-        id: `${product.id}-${selectedVariant.id}`,
+        id: `${selectedVariant.id}`,
         name: `${displayName} - ${sizeLabel}`,
         price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
         image: displayImages[0] || "",
         category: categoryName,
       },
-      quantity
+      quantity,
     );
     toast.success(`${displayName} added to cart`);
     await new Promise((r) => setTimeout(r, 400));
     setIsAdding(false);
     onOpenChange(false);
-  }, [addItem, product, selectedVariant, displayName, displayImages, categoryName, quantity, onOpenChange]);
+  }, [
+    addItem,
+    product,
+    selectedVariant,
+    displayName,
+    displayImages,
+    categoryName,
+    quantity,
+    onOpenChange,
+  ]);
 
   if (!product) return null;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange} >
+    <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
         className="w-full sm:w-[50vw] sm:max-w-[50vw] lg:w-[40vw] lg:max-w-[40vw] p-0 overflow-hidden"
@@ -156,12 +170,14 @@ export function ProductModal({
                 {Array.from(new Set(displayImages)).map((image, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImageIndex(displayImages.indexOf(image))}
+                    onClick={() =>
+                      setSelectedImageIndex(displayImages.indexOf(image))
+                    }
                     className={cn(
                       "relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-md border-2 bg-background transition-all",
                       selectedImageIndex === displayImages.indexOf(image)
                         ? "border-primary ring-2 ring-primary/20"
-                        : "border-transparent hover:border-muted-foreground/50"
+                        : "border-transparent hover:border-muted-foreground/50",
                     )}
                   >
                     <Image
@@ -185,11 +201,15 @@ export function ProductModal({
             </p>
 
             {/* Product Name */}
-            <h2 className="mt-1 text-xl font-bold lg:text-2xl">{displayName}</h2>
+            <h2 className="mt-1 text-xl font-bold lg:text-2xl">
+              {displayName}
+            </h2>
 
             {/* Price */}
             <div className="mt-3">
-              <span className="text-2xl font-bold text-primary">{product.price}</span>
+              <span className="text-2xl font-bold text-primary">
+                {product.price}
+              </span>
             </div>
 
             {/* Category */}
@@ -217,15 +237,18 @@ export function ProductModal({
                       id={`size-${type}`}
                       value={
                         selectedVariant?.attributes["Size Type"] === type ||
-                        (!selectedVariant?.attributes["Size Type"] && type === "Standard")
+                        (!selectedVariant?.attributes["Size Type"] &&
+                          type === "Standard")
                           ? selectedVariant?.id || ""
                           : ""
                       }
-                      onChange={(e) => handleVariantChange(type, e.target.value)}
+                      onChange={(e) =>
+                        handleVariantChange(type, e.target.value)
+                      }
                       className={cn(
                         "mt-1.5 w-full rounded-md border border-border bg-background px-3 py-2.5 text-sm",
                         "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                        "disabled:cursor-not-allowed disabled:opacity-50"
+                        "disabled:cursor-not-allowed disabled:opacity-50",
                       )}
                     >
                       <option value="">Select size</option>
@@ -242,7 +265,9 @@ export function ProductModal({
 
             {/* Quantity Selector */}
             <div className="mt-5">
-              <span className="text-xs font-semibold uppercase tracking-wider">Quantity</span>
+              <span className="text-xs font-semibold uppercase tracking-wider">
+                Quantity
+              </span>
               <div className="mt-1.5 flex items-center gap-2">
                 <Button
                   aria-label="Decrease quantity"
@@ -255,7 +280,9 @@ export function ProductModal({
                   <Minus className="h-4 w-4" />
                 </Button>
 
-                <span className="w-10 text-center select-none text-base font-semibold">{quantity}</span>
+                <span className="w-10 text-center select-none text-base font-semibold">
+                  {quantity}
+                </span>
 
                 <Button
                   aria-label="Increase quantity"

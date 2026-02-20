@@ -360,23 +360,26 @@ export interface ServerCart {
 
 // Checkout Types (Square redirect flow)
 export interface CheckoutRequest {
-  shippingFirstName: string;
-  shippingLastName: string;
-  shippingCompany?: string;
-  shippingCountry: string;
-  shippingAddress1: string;
-  shippingAddress2?: string;
-  shippingCity: string;
-  shippingState: string;
-  shippingPostalCode: string;
-  shippingPhone?: string;
-  shippingEmail: string;
+  shipping: {
+    name: string;
+    phone?: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
+  clubId?: string;
   notes?: string;
 }
 
 export interface CheckoutResponse {
   orderId: string;
+  orderNumber: string;
   checkoutUrl: string;
+  total: number;
+  shippingTotal: number;
   message: string;
 }
 
