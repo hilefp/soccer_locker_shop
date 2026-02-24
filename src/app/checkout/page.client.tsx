@@ -49,8 +49,10 @@ export function CheckoutPageClient() {
 
   const [cartSyncing, setCartSyncing] = React.useState(false);
 
+  const TAX_RATE = 0.07;
   const shippingCost = calculateShipping(itemCount);
-  const total = subtotal + shippingCost;
+  const tax = subtotal * TAX_RATE;
+  const total = subtotal + tax + shippingCost;
 
   const {
     register,
@@ -451,6 +453,10 @@ export function CheckoutPageClient() {
                   Shipping ({itemCount} {itemCount === 1 ? "item" : "items"})
                 </span>
                 <span className="font-medium">${shippingCost.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Tax (7%)</span>
+                <span className="font-medium">${tax.toFixed(2)}</span>
               </div>
 
               <Separator />

@@ -35,18 +35,26 @@ export function ClubProductClient({
   const [quantity, setQuantity] = React.useState(1);
   const [isAdding, setIsAdding] = React.useState(false);
 
-  // Group variants by Size Type
+  // Get the display value for a variant's size attribute
+  const getVariantSize = (variant: ProductVariant) => {
+    const attrKey = Object.keys(variant.attributes)[0];
+    return attrKey ? variant.attributes[attrKey] : variant.sku;
+  };
+
+  // Group variants by their attribute key (e.g. "All Sizes", "Size Type", etc.)
   const variantsByType = React.useMemo(() => {
     if (!product?.product.variants) return {};
-    return product.product.variants.reduce(
-      (acc, variant) => {
-        const sizeType = variant.attributes["Size Type"] || "Standard";
-        if (!acc[sizeType]) acc[sizeType] = [];
-        acc[sizeType].push(variant);
-        return acc;
-      },
-      {} as Record<string, ProductVariant[]>,
-    );
+    return product.product.variants
+      .filter((v) => Object.keys(v.attributes).length > 0)
+      .reduce(
+        (acc, variant) => {
+          const attrKey = Object.keys(variant.attributes)[0];
+          if (!acc[attrKey]) acc[attrKey] = [];
+          acc[attrKey].push(variant);
+          return acc;
+        },
+        {} as Record<string, ProductVariant[]>,
+      );
   }, [product]);
 
   const sizeTypes = Object.keys(variantsByType);
@@ -56,9 +64,7 @@ export function ClubProductClient({
     if (!product || !selectedVariant) return;
 
     setIsAdding(true);
-    const sizeType = selectedVariant.attributes["Size Type"];
-    const size = selectedVariant.attributes["Size"];
-    const sizeLabel = sizeType ? `${sizeType} ${size}` : size;
+    const sizeLabel = getVariantSize(selectedVariant);
 
     addItem(
       {
@@ -177,7 +183,7 @@ export function ClubProductClient({
                           : "border-border bg-background hover:border-primary hover:bg-accent",
                       )}
                     >
-                      {variant.attributes["Size"]}
+                      {getVariantSize(variant)}
                     </button>
                   ))}
                 </div>

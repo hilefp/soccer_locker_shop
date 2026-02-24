@@ -62,21 +62,29 @@ export function ProductModal({
     }
   }, [open, product?.id]);
 
-  // Group variants by Size Type
+  // Group variants by their attribute key (e.g. "All Sizes", "Size Type", etc.)
   const variantsByType = React.useMemo(() => {
     if (!product?.product.variants) return {};
-    return product.product.variants.reduce(
-      (acc, variant) => {
-        const sizeType = variant.attributes["Size Type"] || "Standard";
-        if (!acc[sizeType]) acc[sizeType] = [];
-        acc[sizeType].push(variant);
-        return acc;
-      },
-      {} as Record<string, ProductVariant[]>,
-    );
+    return product.product.variants
+      .filter((v) => Object.keys(v.attributes).length > 0)
+      .reduce(
+        (acc, variant) => {
+          const attrKey = Object.keys(variant.attributes)[0];
+          if (!acc[attrKey]) acc[attrKey] = [];
+          acc[attrKey].push(variant);
+          return acc;
+        },
+        {} as Record<string, ProductVariant[]>,
+      );
   }, [product]);
 
   const sizeTypes = Object.keys(variantsByType);
+
+  // Get the display value for a variant's size attribute
+  const getVariantSize = (variant: ProductVariant) => {
+    const attrKey = Object.keys(variant.attributes)[0];
+    return attrKey ? variant.attributes[attrKey] : variant.sku;
+  };
 
   // Handle variant selection from select
   const handleVariantChange = (sizeType: string, variantId: string) => {
@@ -91,9 +99,7 @@ export function ProductModal({
     if (!product || !selectedVariant) return;
 
     setIsAdding(true);
-    const sizeType = selectedVariant.attributes["Size Type"];
-    const size = selectedVariant.attributes["Size"];
-    const sizeLabel = sizeType ? `${sizeType} ${size}` : size;
+    const sizeLabel = getVariantSize(selectedVariant);
 
     addItem(
       {
@@ -238,10 +244,11 @@ export function ProductModal({
                     <select
                       id={`size-${type}`}
                       value={
-                        selectedVariant?.attributes["Size Type"] === type ||
-                        (!selectedVariant?.attributes["Size Type"] &&
-                          type === "Standard")
-                          ? selectedVariant?.id || ""
+                        selectedVariant &&
+                        variantsByType[type]?.some(
+                          (v) => v.id === selectedVariant.id,
+                        )
+                          ? selectedVariant.id
                           : ""
                       }
                       onChange={(e) =>
@@ -256,7 +263,7 @@ export function ProductModal({
                       <option value="">Select size</option>
                       {variantsByType[type].map((variant) => (
                         <option key={variant.id} value={variant.id}>
-                          {variant.attributes["Size"]}
+                          {getVariantSize(variant)}
                         </option>
                       ))}
                     </select>
