@@ -24,8 +24,9 @@ export const apiClientBrowser = ofetch.create({
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("auth-token");
       if (token) {
-        options.headers = options.headers || {};
-        (options.headers as unknown as Record<string, string>).Authorization = `Bearer ${token}`;
+        const headers = new Headers(options.headers as HeadersInit);
+        headers.set("Authorization", `Bearer ${token}`);
+        options.headers = headers;
       }
     }
   },

@@ -10,7 +10,7 @@ const STATUS_CONFIG: Record<string, { label: string; description: string }> = {
   },
   PRINT: {
     label: "Ready to Print",
-    description: "Your order is queued for printing",
+    description: "Your order has been printed",
   },
   PICKING_UP: {
     label: "Preparing",

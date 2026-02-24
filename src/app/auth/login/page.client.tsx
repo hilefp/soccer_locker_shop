@@ -3,7 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -18,7 +19,14 @@ import { Label } from "~/ui/primitives/label";
 
 export function LoginPageClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
+
+  React.useEffect(() => {
+    if (searchParams.get("reason") === "session_expired") {
+      toast.warning("Your session expired. Please log in again.");
+    }
+  }, [searchParams]);
 
   const {
     register,

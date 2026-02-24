@@ -4,6 +4,7 @@ import { CartClient } from "./cart-client";
 
 export interface CartItem {
   category: string;
+  clubId?: string;
   id: string;
   image: string;
   name: string;
