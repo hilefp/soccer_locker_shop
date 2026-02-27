@@ -112,6 +112,15 @@ export default function TrackOrderPage() {
 
       {orderData && (
         <div className="space-y-6">
+          {/* Order Progress Timeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OrderTimeline timeline={getOrderTimeline(orderData)} />
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -189,15 +198,6 @@ export default function TrackOrderPage() {
             </CardContent>
           </Card>
 
-          {/* Order Progress Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <OrderTimeline timeline={getOrderTimeline(orderData)} />
-            </CardContent>
-          </Card>
         </div>
       )}
 
