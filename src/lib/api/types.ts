@@ -403,6 +403,7 @@ export interface OrderItem {
   sku: string;
   attributes: Record<string, string> | null;
   quantity: number;
+  missingQuantity: number;
   unitPrice: string;
   totalPrice: string;
   createdAt: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "~/ui/primitives/button";
@@ -12,6 +12,14 @@ import { getOrderTimeline, getEstimatedDelivery } from "~/lib/utils/order-timeli
 import type { Order, ApiResponse } from "~/lib/api/types";
 
 export default function TrackOrderPage() {
+  return (
+    <Suspense>
+      <TrackOrderContent />
+    </Suspense>
+  );
+}
+
+function TrackOrderContent() {
   const searchParams = useSearchParams();
   const [orderNumber, setOrderNumber] = useState("");
   const [orderData, setOrderData] = useState<Order | null>(null);
@@ -112,6 +120,15 @@ export default function TrackOrderPage() {
 
       {orderData && (
         <div className="space-y-6">
+          {/* Order Progress Timeline */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Order Progress</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OrderTimeline timeline={getOrderTimeline(orderData)} />
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -122,9 +139,11 @@ export default function TrackOrderPage() {
                     ${
                       orderData.status === "DELIVERED"
                         ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
-                        : orderData.status === "SHIPPED" || orderData.status === "IN_TRANSIT"
-                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                          : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                        : orderData.status === "MISSING"
+                          ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                          : orderData.status === "SHIPPED" || orderData.status === "IN_TRANSIT"
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
                     }
                   `}
                 >
@@ -148,8 +167,32 @@ export default function TrackOrderPage() {
                   </div>
                 )}
 
+                {/* Missing Items */}
+                {orderData.status === "MISSING" && orderData.items && orderData.items.filter((i) => i.missingQuantity > 0).length > 0 && (
+                  <div className="rounded-lg border border-yellow-500/50 bg-yellow-50 p-4 dark:bg-yellow-900/20">
+                    <h3 className="mb-2 font-semibold text-yellow-800 dark:text-yellow-400">
+                      Missing Items
+                    </h3>
+                    <ul className="space-y-2">
+                      {orderData.items.filter((i) => i.missingQuantity > 0).map((item) => (
+                        <li className="flex items-center justify-between text-sm" key={item.id}>
+                          <span className="text-yellow-900 dark:text-yellow-300">
+                            {item.name} {item.attributes?.size ? `(${item.attributes.size})` : ""}
+                          </span>
+                          <span className="text-yellow-700 dark:text-yellow-400">
+                            {item.missingQuantity} of {item.quantity} missing
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 text-sm text-yellow-700 dark:text-yellow-400">
+                      We apologize for the inconvenience. We are working to get the missing items to you as soon as possible.
+                    </p>
+                  </div>
+                )}
+
                 {/* Estimated Delivery */}
-                {orderData.status !== "DELIVERED" && (
+                {orderData.status !== "DELIVERED" && orderData.status !== "MISSING" && (
                   <div>
                     <p className="text-sm text-muted-foreground">
                       Estimated Delivery:{" "}
@@ -163,15 +206,6 @@ export default function TrackOrderPage() {
             </CardContent>
           </Card>
 
-          {/* Order Progress Timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <OrderTimeline timeline={getOrderTimeline(orderData)} />
-            </CardContent>
-          </Card>
         </div>
       )}
 

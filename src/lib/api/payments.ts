@@ -1,6 +1,6 @@
 // Payments API client (Polar integration)
 
-import { apiGetServer } from "~/lib/api/client-server";
+import { apiGetServerAuth } from "~/lib/api/client-server";
 import type { PolarCustomer, PolarSubscription } from "~/lib/api/types";
 
 /**
@@ -10,7 +10,7 @@ export async function getCustomerState(
   userId: string,
 ): Promise<PolarCustomer | null> {
   try {
-    const customer = await apiGetServer<PolarCustomer>(
+    const customer = await apiGetServerAuth<PolarCustomer>(
       `/payments/customers/${userId}`,
     );
     return customer;
@@ -30,7 +30,7 @@ export async function getUserSubscriptions(
   userId: string,
 ): Promise<PolarSubscription[]> {
   try {
-    const subscriptions = await apiGetServer<PolarSubscription[]>(
+    const subscriptions = await apiGetServerAuth<PolarSubscription[]>(
       `/payments/subscriptions/${userId}`,
     );
     return subscriptions;

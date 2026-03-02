@@ -53,6 +53,11 @@ export function ConfirmPageClient() {
           setStatus("success");
           clearCart();
           toast.success("Payment confirmed!");
+
+          // Send invoice email (fire-and-forget)
+          apiPost(`/api/shop/orders/${result.orderNumber}/send-invoice`, {}).catch((err) => {
+            console.error("Failed to send invoice email:", err);
+          });
         } else {
           setStatus("failed");
           setErrorMessage(

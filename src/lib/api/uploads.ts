@@ -2,7 +2,7 @@
 
 import {
   apiDeleteServer,
-  apiGetServer,
+  apiGetServerAuth,
   apiPostServer,
 } from "~/lib/api/client-server";
 import type { CreateUploadRequest, Upload } from "~/lib/api/types";
@@ -14,7 +14,7 @@ export async function getUploadsByUserId(
   userId: string,
 ): Promise<Upload[]> {
   try {
-    const uploads = await apiGetServer<Upload[]>(`/uploads?userId=${userId}`);
+    const uploads = await apiGetServerAuth<Upload[]>(`/uploads?userId=${userId}`);
     return uploads;
   } catch (error) {
     console.error(
