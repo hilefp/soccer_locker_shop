@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 import { Button } from "~/ui/primitives/button";
@@ -12,6 +12,14 @@ import { getOrderTimeline, getEstimatedDelivery } from "~/lib/utils/order-timeli
 import type { Order, ApiResponse } from "~/lib/api/types";
 
 export default function TrackOrderPage() {
+  return (
+    <Suspense>
+      <TrackOrderContent />
+    </Suspense>
+  );
+}
+
+function TrackOrderContent() {
   const searchParams = useSearchParams();
   const [orderNumber, setOrderNumber] = useState("");
   const [orderData, setOrderData] = useState<Order | null>(null);

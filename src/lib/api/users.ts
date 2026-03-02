@@ -1,6 +1,6 @@
 // Users API client
 
-import { apiGetServer, apiPatchServer } from "~/lib/api/client-server";
+import { apiGetServerAuth, apiPatchServer } from "~/lib/api/client-server";
 import type { User } from "~/lib/api/types";
 
 /**
@@ -8,7 +8,7 @@ import type { User } from "~/lib/api/types";
  */
 export async function getUserById(userId: string): Promise<User | null> {
   try {
-    const user = await apiGetServer<User>(`/users/${userId}`);
+    const user = await apiGetServerAuth<User>(`/users/${userId}`);
     return user;
   } catch (error) {
     console.error(`Failed to fetch user ${userId}:`, error);

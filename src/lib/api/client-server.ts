@@ -10,14 +10,24 @@ if (!API_URL) {
   throw new Error("NEXT_SERVER_API_URL is not configured");
 }
 
-// Server-side HTTP client
+// Public server client — does NOT read cookies, safe for static/ISR pages
+const apiClientPublic = ofetch.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  async onResponseError({ response }) {
+    console.error(`API Error: ${response.status}`, response._data);
+  },
+});
+
+// Authenticated server client — reads cookies, forces dynamic rendering
 export const apiClientServer = ofetch.create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
   async onRequest({ options }) {
-    // Add auth token from cookies on server
     const cookieStore = await cookies();
     const token = cookieStore.get("auth-token")?.value;
     if (token) {
@@ -30,8 +40,16 @@ export const apiClientServer = ofetch.create({
   },
 });
 
-// Type-safe API wrapper functions for server
+// Public GET — no cookies, allows static rendering
 export async function apiGetServer<T>(
+  path: string,
+  options?: RequestInit,
+): Promise<T> {
+  return apiClientPublic<T>(path, { method: "GET", ...options });
+}
+
+// Authenticated GET — reads cookies, makes route dynamic
+export async function apiGetServerAuth<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
