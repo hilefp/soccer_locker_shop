@@ -372,6 +372,7 @@ export interface CheckoutRequest {
   };
   clubId?: string;
   notes?: string;
+  isRushOrder?: boolean;
 }
 
 export interface CheckoutResponse {
@@ -380,7 +381,13 @@ export interface CheckoutResponse {
   checkoutUrl: string;
   total: number;
   shippingTotal: number;
+  rushFee?: number;
   message: string;
+}
+
+export interface RushFeeResponse {
+  rushFee: number;
+  description: string;
 }
 
 export interface ConfirmCheckoutRequest {

@@ -1,15 +1,19 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Package, ShoppingCart } from "lucide-react";
+import { Loader2, Package, ShoppingCart, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { apiDelete, apiPost } from "~/lib/api/client";
-import type { CheckoutRequest, CheckoutResponse } from "~/lib/api/types";
+import { apiDelete, apiGet, apiPost } from "~/lib/api/client";
+import type {
+  CheckoutRequest,
+  CheckoutResponse,
+  RushFeeResponse,
+} from "~/lib/api/types";
 import { useAuth } from "~/lib/hooks/use-auth";
 import { useCart } from "~/lib/hooks/use-cart";
 import {
@@ -26,6 +30,7 @@ import {
 import { Input } from "~/ui/primitives/input";
 import { Label } from "~/ui/primitives/label";
 import { Separator } from "~/ui/primitives/separator";
+import { Switch } from "~/ui/primitives/switch";
 import { Textarea } from "~/ui/primitives/textarea";
 
 /* -------------------------------------------------------------------------- */
@@ -48,15 +53,14 @@ export function CheckoutPageClient() {
   const { items, subtotal, itemCount } = useCart();
 
   const [cartSyncing, setCartSyncing] = React.useState(false);
-
-  const TAX_RATE = 0.07;
-  const shippingCost = calculateShipping(itemCount);
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax + shippingCost;
+  const [rushFeeAmount, setRushFeeAmount] = React.useState(0);
+  const [rushDescription, setRushDescription] = React.useState("");
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormData>({
     defaultValues: {
@@ -74,9 +78,18 @@ export function CheckoutPageClient() {
         postalCode: user?.profile?.postalCode || "",
       },
       notes: "",
+      isRushOrder: false,
     },
     resolver: zodResolver(checkoutSchema),
   });
+
+  const isRushOrder = watch("isRushOrder");
+
+  const TAX_RATE = 0.07;
+  const shippingCost = calculateShipping(itemCount);
+  const tax = subtotal * TAX_RATE;
+  const rushFee = isRushOrder ? rushFeeAmount : 0;
+  const total = subtotal + tax + shippingCost + rushFee;
 
   /* ---------------------- Cart sync on mount ----------------------------- */
   const itemsRef = React.useRef(items);
@@ -126,6 +139,23 @@ export function CheckoutPageClient() {
     };
   }, [authLoading]);
 
+  /* ---------------------- Fetch rush fee --------------------------------- */
+  React.useEffect(() => {
+    async function fetchRushFee() {
+      try {
+        const data = await apiGet<RushFeeResponse>(
+          "/api/shop/checkout/rush-fee",
+        );
+        setRushFeeAmount(data.rushFee);
+        setRushDescription(data.description);
+      } catch (err) {
+        console.error("Failed to fetch rush fee:", err);
+      }
+    }
+
+    void fetchRushFee();
+  }, []);
+
   /* ---------------------- Form submission -------------------------------- */
   const onSubmit = async (data: CheckoutFormData) => {
     try {
@@ -145,6 +175,7 @@ export function CheckoutPageClient() {
         },
         clubId,
         notes: data.notes || undefined,
+        isRushOrder: data.isRushOrder || false,
       };
 
       const result = await apiPost<CheckoutResponse>(
@@ -208,6 +239,48 @@ export function CheckoutPageClient() {
             className="space-y-6"
             onSubmit={handleSubmit(onSubmit)}
           >
+
+
+            {/* Rush Processing */}
+            {rushFeeAmount > 0 && (
+              <Card
+                className={
+                  isRushOrder
+                    ? "border-primary bg-primary/5 transition-colors"
+                    : "transition-colors"
+                }
+              >
+                <CardContent className="flex items-start gap-4 pt-6">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                    <Zap className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-semibold">
+                        Rush my order for faster processing
+                      </h3>
+                      <Switch
+                        checked={isRushOrder ?? false}
+                        onCheckedChange={(checked) =>
+                          setValue("isRushOrder", checked === true)
+                        }
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {rushDescription}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold">
+                      + ${rushFeeAmount.toFixed(2)}{" "}
+                      {/* <span className="font-normal text-muted-foreground">
+                        (tax-free)
+                      </span> */}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+
             {/* Shipping Address */}
             <Card>
               <CardHeader>
@@ -454,6 +527,16 @@ export function CheckoutPageClient() {
                 </span>
                 <span className="font-medium">${shippingCost.toFixed(2)}</span>
               </div>
+              {isRushOrder && rushFeeAmount > 0 && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">
+                    Rush Processing
+                  </span>
+                  <span className="font-medium">
+                    ${rushFeeAmount.toFixed(2)}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Tax (7%)</span>
                 <span className="font-medium">${tax.toFixed(2)}</span>
