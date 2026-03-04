@@ -62,10 +62,10 @@ export function Header({ showAuth = true }: HeaderProps) {
             <Link className="flex items-center" href="/">
               <Image
                 alt="Soccer Locker"
-                className="h-10 w-auto"
+                className="h-15 w-auto"
                 height={57}
                 priority
-                src="/Logo.svg"
+                src="/soccerlocker-team-logo.svg"
                 width={157}
               />
             </Link>
