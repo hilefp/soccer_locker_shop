@@ -51,7 +51,7 @@ export function ProductModal({
   const logoSrc =
     resolvedTheme === "dark"
       ? "/soccerlocker-team-logo-black.png"
-      : "/soccerlocker-team-logo.png";
+      : "/soccerlocker-team-logo-white.png";
 
   // Reset state when modal opens with new product
   React.useEffect(() => {

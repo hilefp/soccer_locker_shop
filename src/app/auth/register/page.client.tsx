@@ -224,7 +224,7 @@ export function RegisterPageClient() {
                       )}
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="phone">Phone (Optional)</Label>
+                      <Label htmlFor="phone">Phone *</Label>
                       <Input
                         id="phone"
                         placeholder="+1 (555) 123-4567"
