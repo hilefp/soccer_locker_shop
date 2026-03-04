@@ -436,6 +436,8 @@ export interface Order {
   subtotal: string;
   taxTotal: string;
   shippingTotal: string;
+  isRushOrder: boolean;
+  rushFee: string;
   total: string;
   currency: string;
   shippingName: string;
