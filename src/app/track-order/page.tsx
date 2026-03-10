@@ -31,7 +31,7 @@ function TrackOrderContent() {
     setIsSearching(true);
 
     try {
-      const response = await fetch(`/api/orders/${number.toUpperCase()}`);
+      const response = await fetch(`/api/orders/${number.trim()}`);
 
       if (!response.ok) {
         const errorData = await response.json() as ApiResponse<Order>;
@@ -86,13 +86,13 @@ function TrackOrderContent() {
           <form className="space-y-4" onSubmit={handleSearch}>
             <div className="space-y-2">
               <Label htmlFor="orderNumber">
-                Enter your order number (e.g., ORD-2024-001, ORD-2024-002, ORD-2024-003)
+                Enter your order number (e.g., 10001, 10002, 10003)
               </Label>
               <div className="flex gap-2">
                 <Input
                   className="flex-1"
                   id="orderNumber"
-                  placeholder="ORD-2024-003"
+                  placeholder="10001"
                   value={orderNumber}
                   onChange={(e) => setOrderNumber(e.target.value)}
                   required
