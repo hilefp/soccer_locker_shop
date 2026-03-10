@@ -167,6 +167,13 @@ function TrackOrderContent() {
                               Size: {Object.values(item.attributes)[0]}
                             </p>
                           )}
+                          {item.customFields && typeof item.customFields === "object" && Object.keys(item.customFields).length > 0 && (
+                            <div className="text-sm text-muted-foreground">
+                              {Object.entries(item.customFields).filter(([, v]) => v).map(([k, v]) => (
+                                <p key={k}>{k}: {v}</p>
+                              ))}
+                            </div>
+                          )}
                         </li>
                       ))}
                     </ul>

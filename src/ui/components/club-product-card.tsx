@@ -84,7 +84,7 @@ export function ClubProductCard({ product, onClick }: ClubProductCardProps) {
         {/* Price & Actions */}
         <div className="mt-auto flex items-center justify-between pt-2">
           <div className="flex flex-col">
-            <span className="text-lg font-bold">{product.price}</span>
+            <span className="text-lg font-bold">${product.price}</span>
           </div>
 
           <Button

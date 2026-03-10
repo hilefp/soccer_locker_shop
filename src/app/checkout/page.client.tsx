@@ -116,6 +116,7 @@ export function CheckoutPageClient() {
           await apiPost("/api/shop/cart/items", {
             productVariantId,
             quantity: item.quantity,
+            customFields: item.customFields,
           });
         }
 
@@ -165,7 +166,7 @@ export function CheckoutPageClient() {
       const payload: CheckoutRequest = {
         shipping: {
           name: `${data.shipping.firstName} ${data.shipping.lastName}`.trim(),
-          phone: data.shipping.phone || undefined,
+          phone: data.shipping.phone || "",
           address1: data.shipping.address1,
           address2: data.shipping.address2 || undefined,
           city: data.shipping.city,
@@ -185,12 +186,16 @@ export function CheckoutPageClient() {
 
       // Redirect to Square hosted checkout page
       window.location.href = result.checkoutUrl;
-    } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Checkout failed. Please try again.",
-      );
+    } catch (err: any) {
+      const apiMessages = err?.data?.message ?? err?.response?._data?.message;
+      const errorText = Array.isArray(apiMessages)
+        ? apiMessages.join(". ")
+        : typeof apiMessages === "string"
+          ? apiMessages
+          : err instanceof Error
+            ? err.message
+            : "Checkout failed. Please try again.";
+      toast.error(errorText);
       console.error("Checkout error:", err);
     }
   };
@@ -503,6 +508,22 @@ export function CheckoutPageClient() {
                     <p className="line-clamp-2 text-sm font-medium">
                       {item.name}
                     </p>
+                    {item.customFields &&
+                      Object.keys(item.customFields).length > 0 && (
+                        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                          {Object.entries(item.customFields).map(
+                            ([key, value]) =>
+                              value ? (
+                                <span
+                                  key={key}
+                                  className="text-xs text-primary"
+                                >
+                                  {key}: {value}
+                                </span>
+                              ) : null,
+                          )}
+                        </div>
+                      )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         Qty: {item.quantity}
