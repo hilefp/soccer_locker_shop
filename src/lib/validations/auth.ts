@@ -24,7 +24,7 @@ export const registerSchema = z
     lastName: z.string().min(2, "Last name must be at least 2 characters"),
 
     // Optional fields
-    phone: z.string().optional(),
+    phone: z.string().min(10, "Phone must be at least 10 characters"),
     birthDate: z.string().optional(), // Will be validated as ISO date
     address: z.string().optional(),
     city: z.string().optional(),

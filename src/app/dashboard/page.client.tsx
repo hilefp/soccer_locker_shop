@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-import type { User } from "~/lib/api/types";
+import type { ShopCustomerProfile, User } from "~/lib/api/types";
 
+import { apiGet } from "~/lib/api/client";
 import { signOut, useCurrentUser } from "~/lib/auth-client";
 import { SidebarAccount } from "~/ui/components/sidebar-account";
 import { Button } from "~/ui/primitives/button";
@@ -24,6 +25,13 @@ interface DashboardPageClientProps {
 
 export function DashboardPageClient({ user }: DashboardPageClientProps) {
   const { loading } = useCurrentUser();
+  const [profile, setProfile] = useState<ShopCustomerProfile | null>(null);
+
+  useEffect(() => {
+    apiGet<{ customerProfile: ShopCustomerProfile }>("/api/shop/account/profile")
+      .then((data) => setProfile(data.customerProfile))
+      .catch(() => {});
+  }, []);
 
   const handleSignOut = () => {
     void signOut();
@@ -130,7 +138,9 @@ export function DashboardPageClient({ user }: DashboardPageClientProps) {
                 <div className="space-y-1">
                   <p className="text-sm leading-none font-medium">Name</p>
                   <p className="text-sm text-muted-foreground">
-                    {user.name ?? "Not set"}
+                    {profile?.firstName || profile?.lastName
+                      ? `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim()
+                      : "Not set"}
                   </p>
                 </div>
                 <div className="space-y-1">
@@ -139,40 +149,20 @@ export function DashboardPageClient({ user }: DashboardPageClientProps) {
                     {user.email ?? "Not set"}
                   </p>
                 </div>
-                {user?.firstName && (
-                  <div className="space-y-1">
-                    <p className="text-sm leading-none font-medium">
-                      First Name
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {user.firstName}
-                    </p>
-                  </div>
-                )}
-                {user?.lastName && (
-                  <div className="space-y-1">
-                    <p className="text-sm leading-none font-medium">
-                      Last Name
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {user.lastName}
-                    </p>
-                  </div>
-                )}
                 {user?.age ? (
                   <div className="space-y-1">
                     <p className="text-sm leading-none font-medium">Age</p>
                     <p className="text-sm text-muted-foreground">{user.age}</p>
                   </div>
                 ) : null}
-                <div className="space-y-1">
+                {/* <div className="space-y-1">
                   <p className="text-sm leading-none font-medium">
                     Two-Factor Authentication
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {user.twoFactorEnabled ? "Enabled" : "Disabled"}
                   </p>
-                </div>
+                </div> */}
               </div>
             )}
           </CardContent>

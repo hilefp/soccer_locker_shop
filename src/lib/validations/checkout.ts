@@ -15,6 +15,7 @@ export const checkoutSchema = z.object({
     postalCode: z.string().min(3, "Postal code is required"),
   }),
   notes: z.string().optional(),
+  isRushOrder: z.boolean().optional(),
 });
 
 export type CheckoutFormData = z.infer<typeof checkoutSchema>;

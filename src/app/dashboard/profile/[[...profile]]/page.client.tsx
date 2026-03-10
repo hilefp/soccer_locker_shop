@@ -1,26 +1,90 @@
 "use client";
 
-import { Shield, User } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { MapPin, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
-import { twoFactor, useCurrentUserOrRedirect } from "~/lib/auth-client";
+import { apiGet, apiPatch } from "~/lib/api/client";
+import type { ShopCustomerProfile } from "~/lib/api/types";
+import { useCurrentUserOrRedirect } from "~/lib/auth-client";
+import {
+  type AddressFormData,
+  type ProfileFormData,
+  addressSchema,
+  profileSchema,
+} from "~/lib/validations/account";
 import { SidebarAccount } from "~/ui/components/sidebar-account";
 import { Button } from "~/ui/primitives/button";
-import { Card, CardContent, CardHeader, CardTitle } from "~/ui/primitives/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "~/ui/primitives/card";
 import { Input } from "~/ui/primitives/input";
 import { Label } from "~/ui/primitives/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/ui/primitives/tabs";
 
 export function ProfilePageClient() {
   const { loading: authLoading, user } = useCurrentUserOrRedirect();
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showQrCode, setShowQrCode] = useState(false);
-  const [qrCodeData, setQrCodeData] = useState("");
-  const [secret, setSecret] = useState("");
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [addressLoading, setAddressLoading] = useState(false);
+
+  const profileForm = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+    },
+  });
+
+  const addressForm = useForm<AddressFormData>({
+    resolver: zodResolver(addressSchema),
+    defaultValues: {
+      address: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "",
+    },
+  });
+
+  useEffect(() => {
+    if (!user) return;
+
+    apiGet<{ customerProfile: ShopCustomerProfile }>("/api/shop/account/profile")
+      .then((data) => {
+        const p = data.customerProfile;
+        profileForm.reset({
+          firstName: p.firstName || "",
+          lastName: p.lastName || "",
+        });
+        addressForm.reset({
+          address: p.address || "",
+          city: p.city || "",
+          state: p.state || "",
+          postalCode: p.postalCode || "",
+          country: p.country || "",
+        });
+      })
+      .catch(() => {
+        // Fall back to user data from auth
+        profileForm.reset({
+          firstName: user.profile?.firstName || "",
+          lastName: user.profile?.lastName || "",
+        });
+        addressForm.reset({
+          address: user.profile?.address || "",
+          city: user.profile?.city || "",
+          state: user.profile?.state || "",
+          postalCode: user.profile?.postalCode || "",
+          country: user.profile?.country || "",
+        });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   if (authLoading) {
     return (
@@ -32,79 +96,28 @@ export function ProfilePageClient() {
     );
   }
 
-  const handleEnableTwoFactor = () => {
-    if (!password) {
-      setError("Password is required");
-      return;
+  const onSaveProfile = async (data: ProfileFormData) => {
+    setProfileLoading(true);
+    try {
+      await apiPatch("/api/shop/account/profile", data);
+      toast.success("Profile updated successfully");
+    } catch {
+      toast.error("Failed to update profile");
+    } finally {
+      setProfileLoading(false);
     }
-
-    setError("");
-    setLoading(true);
-
-    twoFactor
-      .enable({
-        password,
-      })
-      .then((result) => {
-        if ("data" in result && result.data) {
-          const uri = result.data.totpURI;
-          setQrCodeData(uri);
-
-          if (typeof uri === "string" && uri.includes("secret=")) {
-            const secretMatch = uri.split("secret=")[1];
-            if (secretMatch) {
-              const extractedSecret = secretMatch.split("&")[0];
-              if (extractedSecret) {
-                setSecret(extractedSecret);
-              }
-            }
-          }
-
-          setShowQrCode(true);
-          setMessage("Scan the QR code with your authenticator app");
-        } else {
-          setError(
-            "Failed to enable two-factor authentication. Unexpected response format."
-          );
-        }
-      })
-      .catch((err: unknown) => {
-        setError(
-          "Failed to enable two-factor authentication. Please try again."
-        );
-        console.error(err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
   };
 
-  const handleDisableTwoFactor = () => {
-    if (!password) {
-      setError("Password is required");
-      return;
+  const onSaveAddress = async (data: AddressFormData) => {
+    setAddressLoading(true);
+    try {
+      await apiPatch("/api/shop/account/profile", data);
+      toast.success("Address updated successfully");
+    } catch {
+      toast.error("Failed to update address");
+    } finally {
+      setAddressLoading(false);
     }
-
-    setError("");
-    setLoading(true);
-
-    twoFactor
-      .disable({
-        password,
-      })
-      .then(() => {
-        setMessage("Two-factor authentication has been disabled");
-        setShowQrCode(false);
-      })
-      .catch((err: unknown) => {
-        setError(
-          "Failed to disable two-factor authentication. Please try again."
-        );
-        console.error(err);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
   };
 
   return (
@@ -134,150 +147,167 @@ export function ProfilePageClient() {
         <div className="space-y-0.5">
           <h2 className="text-2xl font-bold tracking-tight">Profile</h2>
           <p className="text-muted-foreground">
-            Manage your profile and security settings.
+            Manage your profile information and address.
           </p>
         </div>
 
         <Tabs className="space-y-4" defaultValue="general">
-        <TabsList>
-          <TabsTrigger className="flex items-center gap-2" value="general">
-            <User className="h-4 w-4" />
-            General
-          </TabsTrigger>
-          <TabsTrigger className="flex items-center gap-2" value="security">
-            <Shield className="h-4 w-4" />
-            Security
-          </TabsTrigger>
-        </TabsList>
+          <TabsList>
+            <TabsTrigger className="flex items-center gap-2" value="general">
+              <User className="h-4 w-4" />
+              General
+            </TabsTrigger>
+            <TabsTrigger className="flex items-center gap-2" value="address">
+              <MapPin className="h-4 w-4" />
+              Address
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent className="space-y-4" value="general">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  defaultValue={`${user?.profile?.firstName || ""} ${
-                    user?.profile?.lastName || ""
-                  }`.trim()}
-                  id="name"
-                  placeholder="Enter your name"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  defaultValue={user?.email || ""}
-                  id="email"
-                  placeholder="Enter your email"
-                  type="email"
-                />
-              </div>
-              <Button>Save Changes</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent className="space-y-4" value="security">
-          {error && (
-            <div
-              className={`
-                rounded-md bg-destructive/10 p-4 text-sm text-destructive
-              `}
-            >
-              {error}
-            </div>
-          )}
-
-          {message && (
-            <div className="rounded-md bg-green-50 p-4 text-sm text-green-700">
-              {message}
-            </div>
-          )}
-
-          {showQrCode && qrCodeData && (
+          <TabsContent className="space-y-4" value="general">
             <Card>
               <CardHeader>
-                <CardTitle>Scan QR Code</CardTitle>
+                <CardTitle>Profile Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-col items-center">
-                  <img
-                    alt="QR Code for Two-Factor Authentication"
-                    className="h-48 w-48"
-                    src={qrCodeData}
-                  />
-                  <p className="mt-4 text-center text-sm text-muted-foreground">
-                    Scan this QR code with your authenticator app (Google
-                    Authenticator, Authy, etc.)
-                  </p>
-                  {secret && (
-                    <div className="mt-6 w-full">
-                      <p className="text-sm font-medium">Manual entry code:</p>
-                      <p
-                        className={`
-                          mt-2 rounded-md bg-muted p-4 font-mono text-sm
-                          break-all
-                        `}
-                      >
-                        {secret}
-                      </p>
+              <CardContent>
+                <form
+                  className="space-y-4"
+                  onSubmit={profileForm.handleSubmit(onSaveProfile)}
+                >
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        placeholder="Enter your first name"
+                        {...profileForm.register("firstName")}
+                      />
+                      {profileForm.formState.errors.firstName && (
+                        <p className="text-sm text-destructive">
+                          {profileForm.formState.errors.firstName.message}
+                        </p>
+                      )}
                     </div>
-                  )}
-                </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        placeholder="Enter your last name"
+                        {...profileForm.register("lastName")}
+                      />
+                      {profileForm.formState.errors.lastName && (
+                        <p className="text-sm text-destructive">
+                          {profileForm.formState.errors.lastName.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      defaultValue={user?.email || ""}
+                      disabled
+                      id="email"
+                      type="email"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Contact support to change your email address.
+                    </p>
+                  </div>
+                  <Button disabled={profileLoading} type="submit">
+                    {profileLoading ? "Saving..." : "Save Changes"}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
-          )}
+          </TabsContent>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Two-Factor Authentication</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-2">
-                <Label htmlFor="password">Your Password</Label>
-                <Input
-                  id="password"
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  type="password"
-                  value={password}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Required to change your two-factor authentication settings
-                </p>
-              </div>
-
-              <div className="flex space-x-4">
-                <Button disabled={loading} onClick={handleEnableTwoFactor}>
-                  {loading ? "Processing..." : "Enable Two-Factor"}
-                </Button>
-
-                <Button
-                  disabled={loading}
-                  onClick={handleDisableTwoFactor}
-                  variant="destructive"
+          <TabsContent className="space-y-4" value="address">
+            <Card>
+              <CardHeader>
+                <CardTitle>Address Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  className="space-y-4"
+                  onSubmit={addressForm.handleSubmit(onSaveAddress)}
                 >
-                  {loading ? "Processing..." : "Disable Two-Factor"}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Backup Codes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button asChild>
-                <Link href="/auth/mfa">manage backup codes</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  <div className="grid gap-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input
+                      id="address"
+                      placeholder="Enter your street address"
+                      {...addressForm.register("address")}
+                    />
+                    {addressForm.formState.errors.address && (
+                      <p className="text-sm text-destructive">
+                        {addressForm.formState.errors.address.message}
+                      </p>
+                    )}
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="city">City</Label>
+                      <Input
+                        id="city"
+                        placeholder="Enter your city"
+                        {...addressForm.register("city")}
+                      />
+                      {addressForm.formState.errors.city && (
+                        <p className="text-sm text-destructive">
+                          {addressForm.formState.errors.city.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="state">State</Label>
+                      <Input
+                        id="state"
+                        placeholder="Enter your state"
+                        {...addressForm.register("state")}
+                      />
+                      {addressForm.formState.errors.state && (
+                        <p className="text-sm text-destructive">
+                          {addressForm.formState.errors.state.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        id="country"
+                        placeholder="Enter your country"
+                        {...addressForm.register("country")}
+                      />
+                      {addressForm.formState.errors.country && (
+                        <p className="text-sm text-destructive">
+                          {addressForm.formState.errors.country.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="postalCode">Postal Code</Label>
+                      <Input
+                        id="postalCode"
+                        placeholder="Enter your postal code"
+                        {...addressForm.register("postalCode")}
+                      />
+                      {addressForm.formState.errors.postalCode && (
+                        <p className="text-sm text-destructive">
+                          {addressForm.formState.errors.postalCode.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <Button disabled={addressLoading} type="submit">
+                    {addressLoading ? "Saving..." : "Save Address"}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
