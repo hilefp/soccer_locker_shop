@@ -239,6 +239,20 @@ export function OrdersPageClient() {
                         <span>SKU: {item.sku}</span>
                         {sizeValue && <span>{sizeValue}</span>}
                       </div>
+                      {item.customFields &&
+                        typeof item.customFields === "object" &&
+                        Object.keys(item.customFields).length > 0 && (
+                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-primary">
+                            {Object.entries(item.customFields).map(
+                              ([key, value]) =>
+                                value ? (
+                                  <span key={key}>
+                                    {key}: {value}
+                                  </span>
+                                ) : null,
+                            )}
+                          </div>
+                        )}
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">
                           Qty: {item.quantity}

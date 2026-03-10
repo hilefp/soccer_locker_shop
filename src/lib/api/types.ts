@@ -274,6 +274,15 @@ export interface ProductWithVariants extends Product {
   variants: ProductVariant[];
 }
 
+export interface CustomFieldDefinition {
+  key?: string;
+  type: string;
+  required: boolean;
+  label: string;
+  placeholder: string;
+  value?: string;
+}
+
 export interface ClubProduct {
   id: string;
   clubId: string;
@@ -284,6 +293,7 @@ export interface ClubProduct {
   imageUrls: string[];
   brandLogoUrl: string | null;
   isActive: boolean;
+  customFields: CustomFieldDefinition[] | null;
   stock: number;
   createdAt: string;
   updatedAt: string;
@@ -300,6 +310,7 @@ export interface ClubProductDetail {
   imageUrls: string[];
   brandLogoUrl: string | null;
   isActive: boolean;
+  customFields: CustomFieldDefinition[] | null;
   createdAt: string;
   updatedAt: string;
   product: ProductWithVariants;
@@ -409,6 +420,7 @@ export interface OrderItem {
   name: string;
   sku: string;
   attributes: Record<string, string> | null;
+  customFields: Record<string, any> | null;
   quantity: number;
   missingQuantity: number;
   unitPrice: string;

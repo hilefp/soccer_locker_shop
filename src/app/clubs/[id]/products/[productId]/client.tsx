@@ -34,6 +34,15 @@ export function ClubProductClient({
   const [selectedImageIndex, setSelectedImageIndex] = React.useState(0);
   const [quantity, setQuantity] = React.useState(1);
   const [isAdding, setIsAdding] = React.useState(false);
+  const [customFieldValues, setCustomFieldValues] = React.useState<
+    Record<string, string>
+  >({});
+  const [customFieldErrors, setCustomFieldErrors] = React.useState<
+    Record<string, boolean>
+  >({});
+
+  // The custom field definitions from the club product
+  const customFields = product?.customFields ?? [];
 
   // Get the display value for a variant's size attribute
   const getVariantSize = (variant: ProductVariant) => {
@@ -59,12 +68,47 @@ export function ClubProductClient({
 
   const sizeTypes = Object.keys(variantsByType);
 
+  // Handle custom field change
+  const handleCustomFieldChange = (key: string, value: string) => {
+    setCustomFieldValues((prev) => ({ ...prev, [key]: value }));
+    if (value.trim()) {
+      setCustomFieldErrors((prev) => ({ ...prev, [key]: false }));
+    }
+  };
+
   // Handle add to cart
   const handleAddToCart = React.useCallback(async () => {
     if (!product || !selectedVariant) return;
 
+    // Validate required custom fields
+    if (customFields.length > 0) {
+      const errors: Record<string, boolean> = {};
+      let hasErrors = false;
+      for (const field of customFields) {
+        if (field.required && !customFieldValues[field.key ?? field.label]?.trim()) {
+          errors[field.key ?? field.label] = true;
+          hasErrors = true;
+        }
+      }
+      if (hasErrors) {
+        setCustomFieldErrors(errors);
+        toast.error("Please fill in all required fields");
+        return;
+      }
+    }
+
     setIsAdding(true);
     const sizeLabel = getVariantSize(selectedVariant);
+
+    // Build custom fields object with labels as keys for display
+    const customFieldsData =
+      customFields.length > 0
+        ? Object.fromEntries(
+            customFields
+              .filter((f) => customFieldValues[f.key ?? f.label]?.trim())
+              .map((f) => [f.label, customFieldValues[f.key ?? f.label]]),
+          )
+        : undefined;
 
     addItem(
       {
@@ -75,6 +119,7 @@ export function ClubProductClient({
         category: categoryName,
         clubId,
         variantId: selectedVariant.id,
+        customFields: customFieldsData,
       },
       quantity,
     );
@@ -89,6 +134,8 @@ export function ClubProductClient({
     displayImages,
     categoryName,
     quantity,
+    customFields,
+    customFieldValues,
   ]);
 
   return (
@@ -151,7 +198,7 @@ export function ClubProductClient({
         {/* Price */}
         <div className="mt-4">
           <span className="text-2xl font-bold text-primary">
-            {product.price}
+            ${product.price}
           </span>
         </div>
 
@@ -189,6 +236,56 @@ export function ClubProductClient({
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Custom Fields (Player Name, Number, etc.) */}
+        {customFields.length > 0 && (
+          <div className="mt-6 space-y-4">
+            {customFields.map((field) => {
+              const fieldKey = field.key ?? field.label;
+              return (
+                <div key={fieldKey}>
+                  <label
+                    htmlFor={`cf-${fieldKey}`}
+                    className="text-sm font-medium text-muted-foreground"
+                  >
+                    {field.label}
+                    {field.required && (
+                      <span className="text-destructive ml-0.5">*</span>
+                    )}
+                  </label>
+                  <input
+                    id={`cf-${fieldKey}`}
+                    type={field.type === "number" || field.type === "date" ? "text" : field.type}
+                    inputMode={field.type === "number" || field.type === "date" ? "numeric" : undefined}
+                    maxLength={field.type === "date" ? 4 : undefined}
+                    placeholder={field.placeholder || (field.type === "date" ? "e.g. 2015" : `Enter ${field.label.toLowerCase()}`)}
+                    value={customFieldValues[fieldKey] ?? ""}
+                    onChange={(e) => {
+                      if (field.type === "date") {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        handleCustomFieldChange(fieldKey, val);
+                      } else {
+                        handleCustomFieldChange(fieldKey, e.target.value);
+                      }
+                    }}
+                    className={cn(
+                      "mt-1.5 w-full rounded-md border bg-background px-3 py-2.5 text-sm",
+                      "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                      customFieldErrors[fieldKey]
+                        ? "border-destructive"
+                        : "border-border",
+                    )}
+                  />
+                  {customFieldErrors[fieldKey] && (
+                    <p className="mt-1 text-xs text-destructive">
+                      {field.label} is required
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -237,6 +334,17 @@ export function ClubProductClient({
             Please select a size to add to cart
           </p>
         )}
+        {selectedVariant &&
+          customFields.length > 0 &&
+          customFields.some(
+            (f) =>
+              f.required &&
+              !customFieldValues[f.key ?? f.label]?.trim(),
+          ) && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Please fill in the required fields above
+            </p>
+          )}
       </div>
     </>
   );

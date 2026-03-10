@@ -30,6 +30,7 @@ import {
 
 export interface CartItem {
   category: string;
+  customFields?: Record<string, any>;
   id: string;
   image: string;
   name: string;
@@ -208,6 +209,22 @@ export function CartClient({ className }: CartProps) {
                         <p className="text-xs text-muted-foreground">
                           {item.category}
                         </p>
+                        {item.customFields &&
+                          Object.keys(item.customFields).length > 0 && (
+                            <div className="mt-0.5 flex flex-wrap gap-x-2">
+                              {Object.entries(item.customFields).map(
+                                ([key, value]) =>
+                                  value ? (
+                                    <span
+                                      key={key}
+                                      className="text-[10px] text-primary"
+                                    >
+                                      {key}: {value}
+                                    </span>
+                                  ) : null,
+                              )}
+                            </div>
+                          )}
                       </div>
                       <div className="mt-2 flex items-center justify-between">
                         <div className="flex items-center rounded-md border">
