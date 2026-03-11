@@ -2,8 +2,7 @@ import { Mail } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-import { getClubById, getClubProducts } from "~/lib/api/clubs";
-import type { ProductCategory } from "~/lib/api/types";
+import { getClubById, getClubProducts, getClubProductTags } from "~/lib/api/clubs";
 import { ClubProductsSection } from "~/ui/components/club-products-section";
 
 interface ClubPageProps {
@@ -30,15 +29,8 @@ export default async function ClubPage({ params }: ClubPageProps) {
   });
 
 
-  // Extract unique categories from products
-  const categoriesMap = new Map<string, ProductCategory>();
-  productsData.data.forEach((clubProduct) => {
-    const category = clubProduct.product.category;
-    if (!categoriesMap.has(category.id)) {
-      categoriesMap.set(category.id, category);
-    }
-  });
-  const categories = Array.from(categoriesMap.values());
+  // Fetch available tags for this club
+  const tags = await getClubProductTags(id);
 
   const clubLogo = club.iconBrandShopUrl || club.logoUrl || club.imageUrl;
   const clubEmail = club.email || club.personInChargeEmail;
@@ -91,7 +83,7 @@ export default async function ClubPage({ params }: ClubPageProps) {
 
       {/* Products Section with Categories */}
       <ClubProductsSection
-        categories={categories}
+        tags={tags}
         clubId={id}
         clubName={club.name}
         initialProducts={productsData.data}

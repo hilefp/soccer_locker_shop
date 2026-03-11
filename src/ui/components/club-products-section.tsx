@@ -7,7 +7,6 @@ import type {
   ClubProduct,
   ClubProductDetail,
   ClubProductFilters,
-  ProductCategory,
 } from "~/lib/api/types";
 import { ClubProductCard } from "~/ui/components/club-product-card";
 
@@ -16,7 +15,7 @@ interface ClubProductsSectionProps {
   clubName: string;
   initialProducts: ClubProduct[];
   initialTotal: number;
-  categories: ProductCategory[];
+  tags: string[];
 }
 
 export function ClubProductsSection({
@@ -24,10 +23,10 @@ export function ClubProductsSection({
   clubName,
   initialProducts,
   initialTotal,
-  categories,
+  tags,
 }: ClubProductsSectionProps) {
   const [products, setProducts] = useState<ClubProduct[]>(initialProducts);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Modal state
@@ -35,14 +34,14 @@ export function ClubProductsSection({
   const [selectedProduct, setSelectedProduct] = useState<ClubProductDetail | null>(null);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
 
-  const categoryGroups = [
+  const tagGroups = [
     { id: null, label: "All Products" },
-    ...categories.map((cat) => ({ id: cat.id, label: cat.name })),
+    ...tags.map((tag) => ({ id: tag, label: tag })),
   ];
 
   useEffect(() => {
     // Reset to initial products when "All Products" is selected
-    if (selectedCategory === null) {
+    if (selectedTag === null) {
       setProducts(initialProducts);
       return;
     }
@@ -56,7 +55,7 @@ export function ClubProductsSection({
           isActive: true,
           sortBy: "createdAt" as any,
           sortOrder: "desc" as any,
-          categoryId: selectedCategory ?? undefined,
+          tags: selectedTag ?? undefined,
         };
 
         const params = new URLSearchParams();
@@ -80,7 +79,7 @@ export function ClubProductsSection({
     }
 
     fetchProducts();
-  }, [selectedCategory, clubId, initialProducts]);
+  }, [selectedTag, clubId, initialProducts]);
 
   const displayedProducts = products;
 
@@ -119,27 +118,26 @@ export function ClubProductsSection({
     return images;
   };
 
-  const activeCategoryLabel =
-    categoryGroups.find((cat) => cat.id === selectedCategory)?.label ||
-    "All Products";
+  const activeTagLabel =
+    tagGroups.find((t) => t.id === selectedTag)?.label || "All Products";
 
   return (
     <>
-      {/* Category Navigation */}
+      {/* Tag Navigation */}
       <section className="sticky top-20 z-30 border-b border-border/50 bg-background/95 backdrop-blur-md">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-3 py-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {categoryGroups.map((category) => (
+            {tagGroups.map((tag) => (
               <button
-                key={category.id || "all"}
+                key={tag.id || "all"}
                 className={`rounded-lg border px-6 py-3.5 text-sm font-medium uppercase tracking-wide transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
-                  selectedCategory === category.id
+                  selectedTag === tag.id
                     ? "border-foreground bg-foreground text-background"
                     : "border-border bg-background hover:border-foreground hover:bg-foreground hover:text-background"
                 }`}
-                onClick={() => setSelectedCategory(category.id)}
+                onClick={() => setSelectedTag(tag.id)}
               >
-                {category.label}
+                {tag.label}
               </button>
             ))}
           </div>
@@ -153,7 +151,7 @@ export function ClubProductsSection({
           <div className="mb-10 flex items-center justify-center">
             <div className="h-px flex-1 bg-border" />
             <h2 className="px-8 text-center text-xl font-bold uppercase tracking-wide">
-              {activeCategoryLabel}
+              {activeTagLabel}
             </h2>
             <div className="h-px flex-1 bg-border" />
           </div>
@@ -183,8 +181,8 @@ export function ClubProductsSection({
               <div className="max-w-md space-y-3 text-center">
                 <p className="text-lg font-medium">No Products Found</p>
                 <p className="text-sm text-muted-foreground">
-                  {selectedCategory
-                    ? `No products available in this category for ${clubName}`
+                  {selectedTag
+                    ? `No products available for "${selectedTag}" in ${clubName}`
                     : `No products available for ${clubName} at the moment`}
                 </p>
               </div>

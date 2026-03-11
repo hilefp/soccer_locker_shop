@@ -72,6 +72,19 @@ export async function getClubProducts(
 }
 
 /**
+ * Fetch available tags for a club's products (server-side)
+ */
+export async function getClubProductTags(clubId: string): Promise<string[]> {
+  try {
+    const tags = await apiGetServer<string[]>(`/api/shop/clubs/${clubId}/products/tags`);
+    return tags;
+  } catch (error) {
+    console.error(`Error fetching tags for club ${clubId}:`, error);
+    return [];
+  }
+}
+
+/**
  * Fetch a single club product by club ID and product ID (server-side)
  */
 export async function getClubProduct(
