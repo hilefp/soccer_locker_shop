@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Package, ShoppingCart, Zap } from "lucide-react";
+import { Loader2, Package, ShoppingCart, Tag, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
@@ -55,6 +55,13 @@ export function CheckoutPageClient() {
   const [cartSyncing, setCartSyncing] = React.useState(false);
   const [rushFeeAmount, setRushFeeAmount] = React.useState(0);
   const [rushDescription, setRushDescription] = React.useState("");
+  const [couponCode, setCouponCode] = React.useState("");
+  const [couponValidating, setCouponValidating] = React.useState(false);
+  const [appliedCoupon, setAppliedCoupon] = React.useState<{
+    code: string;
+    type: string;
+    description: string;
+  } | null>(null);
 
   const {
     register,
@@ -86,10 +93,42 @@ export function CheckoutPageClient() {
   const isRushOrder = watch("isRushOrder");
 
   const TAX_RATE = 0.07;
-  const shippingCost = calculateShipping(itemCount);
+  const baseShippingCost = calculateShipping(itemCount);
+  const shippingCost =
+    appliedCoupon?.type === "FREE_SHIPPING" ? 0 : baseShippingCost;
   const tax = subtotal * TAX_RATE;
   const rushFee = isRushOrder ? rushFeeAmount : 0;
   const total = subtotal + tax + shippingCost + rushFee;
+
+  /* ---------------------- Coupon validation ----------------------------- */
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim();
+    if (!code) return;
+
+    setCouponValidating(true);
+    try {
+      const result = await apiPost<{
+        valid: boolean;
+        type: string;
+        description: string;
+      }>("/api/shop/checkout/validate-coupon", { code });
+
+      setAppliedCoupon({ code, type: result.type, description: result.description });
+      toast.success(`Coupon "${code}" applied!`);
+    } catch (err: any) {
+      const msg =
+        err?.data?.message ?? err?.response?._data?.message ?? "Invalid coupon code.";
+      toast.error(typeof msg === "string" ? msg : "Invalid coupon code.");
+      setAppliedCoupon(null);
+    } finally {
+      setCouponValidating(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+  };
 
   /* ---------------------- Cart sync on mount ----------------------------- */
   const itemsRef = React.useRef(items);
@@ -177,6 +216,7 @@ export function CheckoutPageClient() {
         clubId,
         notes: data.notes || undefined,
         isRushOrder: data.isRushOrder || false,
+        couponCode: appliedCoupon?.code || undefined,
       };
 
       const result = await apiPost<CheckoutResponse>(
@@ -487,8 +527,8 @@ export function CheckoutPageClient() {
         </div>
 
         {/* Right column — Order Summary */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
+        <div className="lg:col-span-1 sticky top-24">
+          <Card>
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
@@ -546,8 +586,29 @@ export function CheckoutPageClient() {
                 <span className="text-muted-foreground">
                   Shipping ({itemCount} {itemCount === 1 ? "item" : "items"})
                 </span>
-                <span className="font-medium">${shippingCost.toFixed(2)}</span>
+                {appliedCoupon?.type === "FREE_SHIPPING" ? (
+                  <span className="font-medium">
+                    <span className="mr-1 text-muted-foreground line-through">
+                      ${baseShippingCost.toFixed(2)}
+                    </span>
+                    $0.00
+                  </span>
+                ) : (
+                  <span className="font-medium">
+                    ${shippingCost.toFixed(2)}
+                  </span>
+                )}
               </div>
+              {appliedCoupon && (
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-green-600">
+                    Coupon ({appliedCoupon.code})
+                  </span>
+                  <span className="font-medium text-green-600">
+                    Free Shipping
+                  </span>
+                </div>
+              )}
               {isRushOrder && rushFeeAmount > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
@@ -578,6 +639,63 @@ export function CheckoutPageClient() {
                   complete your purchase.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Coupon Code */}
+          <Card className="mt-4">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Tag className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-sm font-semibold">Coupon Code</h3>
+              </div>
+              {appliedCoupon ? (
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-md bg-green-100 px-2 py-1 text-sm font-medium text-green-700">
+                      {appliedCoupon.code}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {appliedCoupon.description}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    className="mt-2 text-xs text-destructive hover:underline"
+                    onClick={handleRemoveCoupon}
+                  >
+                    Remove coupon
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void handleApplyCoupon();
+                      }
+                    }}
+                    className="text-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={couponValidating || !couponCode.trim()}
+                    onClick={() => void handleApplyCoupon()}
+                  >
+                    {couponValidating ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "Apply"
+                    )}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
