@@ -384,6 +384,7 @@ export interface CheckoutRequest {
   clubId?: string;
   notes?: string;
   isRushOrder?: boolean;
+  couponCode?: string;
 }
 
 export interface CheckoutResponse {
