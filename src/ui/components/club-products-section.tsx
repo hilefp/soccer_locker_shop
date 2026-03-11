@@ -203,8 +203,8 @@ export function ClubProductsSection({
         product={selectedProduct}
         displayName={getDisplayName()}
         displayImages={getDisplayImages()}
-        brandName={selectedProduct?.product.brand.name || ""}
-        categoryName={selectedProduct?.product.category.name || ""}
+        brandName={selectedProduct?.product.brand?.name || ""}
+        categoryName={selectedProduct?.product.category?.name || ""}
         clubId={clubId}
         open={modalOpen}
         onOpenChange={setModalOpen}
