@@ -38,16 +38,19 @@ export default function ContactPage() {
                 href="mailto:info@soccerlocker.com"
                 className="mt-2 block font-medium text-primary hover:underline"
               >
-                info@soccerlocker.com
+                teamorder@soccerlocker.com
               </a>
               <p className="mt-4 text-muted-foreground">
                 For team orders and bulk pricing:
               </p>
-              <a
-                href="mailto:teams@soccerlocker.com"
-                className="mt-2 block font-medium text-primary hover:underline"
-              >
-                teams@soccerlocker.com
+              <a href="mailto:teams@soccerlocker.com" className="mt-2 block font-medium text-primary hover:underline">
+                roberto@soccerlocker.com
+              </a> 
+              <a href="mailto:montoya@soccerlocker.com" className="mt-2 block font-medium text-primary hover:underline">
+                montoya@soccerlocker.com
+              </a>
+              <a href="mailto:jesus@soccerlocker.com" className="mt-2 block font-medium text-primary hover:underline">
+                jesus@soccerlocker.com
               </a>
             </CardContent>
           </Card>
@@ -61,19 +64,16 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Monday - Friday: 9:00 AM - 6:00 PM EST
+                Monday - Friday: 8:00 AM - 5:00 PM EST
               </p>
               <a
-                href="tel:+1234567890"
+                href="tel:+7867018057"
                 className="mt-2 block font-medium text-primary hover:underline"
               >
-                (123) 456-7890
+                (786) 701-8057
               </a>
-              <p className="mt-4 text-muted-foreground">
-                Saturday: 10:00 AM - 4:00 PM EST
-              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Sunday: Closed
+                Saturday and Sunday: Closed
               </p>
             </CardContent>
           </Card>
@@ -87,15 +87,15 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Soccer Locker Team Shop
+                Soccer Locker Team Uniform
               </p>
               <p className="mt-2 font-medium">
-                123 Soccer Street<br />
-                Sports City, SC 12345<br />
+                8810 SW 131st St<br />
+                Miami, FL 33176<br />
                 United States
               </p>
               <p className="mt-4 text-sm text-muted-foreground">
-                Store Hours: Monday - Saturday 10:00 AM - 7:00 PM
+                Store Hours: Monday - Friday 8:00 AM - 5:00 PM
               </p>
             </CardContent>
           </Card>

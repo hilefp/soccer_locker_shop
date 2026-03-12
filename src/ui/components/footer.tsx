@@ -19,7 +19,7 @@ export function Footer({ className }: { className?: string }) {
         <div
           className={`
             grid grid-cols-1 gap-8
-            md:grid-cols-4
+            md:grid-cols-3
           `}
         >
           <div className="space-y-4">
@@ -53,7 +53,7 @@ export function Footer({ className }: { className?: string }) {
                 asChild
               >
                 <a
-                  href="https://facebook.com/soccerlocker"
+                  href="https://www.facebook.com/SoccerLockerMiami"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -61,7 +61,7 @@ export function Footer({ className }: { className?: string }) {
                   <span className="sr-only">Facebook</span>
                 </a>
               </Button>
-              <Button
+              {/* <Button
                 className="h-8 w-8 rounded-full"
                 size="icon"
                 variant="ghost"
@@ -75,7 +75,7 @@ export function Footer({ className }: { className?: string }) {
                   <Twitter className="h-4 w-4" />
                   <span className="sr-only">Twitter</span>
                 </a>
-              </Button>
+              </Button> */}
               <Button
                 className="h-8 w-8 rounded-full"
                 size="icon"
@@ -83,7 +83,7 @@ export function Footer({ className }: { className?: string }) {
                 asChild
               >
                 <a
-                  href="https://instagram.com/soccerlocker"
+                  href="https://www.instagram.com/soccerlockermiami/"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -93,7 +93,7 @@ export function Footer({ className }: { className?: string }) {
               </Button>
             </div>
           </div>
-          <div>
+          {/* <div>
             <h3 className="mb-4 text-sm font-semibold">Shop</h3>
             <ul className="space-y-2 text-sm">
               <li>
@@ -152,93 +152,97 @@ export function Footer({ className }: { className?: string }) {
                 </Link>
               </li>
             </ul>
+          </div> */}
+          <div className="flex justify-center">
+            <div>
+              <h3 className="mb-4 text-sm font-semibold">Company</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link
+                    className={`
+                      text-muted-foreground
+                      hover:text-foreground
+                    `}
+                    href="/about"
+                  >
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={`
+                      text-muted-foreground
+                      hover:text-foreground
+                    `}
+                    href="/teams"
+                  >
+                    Partner Clubs
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={`
+                      text-muted-foreground
+                      hover:text-foreground
+                    `}
+                    href="/contact"
+                  >
+                    Contact
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
-          <div>
-            <h3 className="mb-4 text-sm font-semibold">Company</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/about"
-                >
-                  About Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/clubs"
-                >
-                  Partner Clubs
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/contact"
-                >
-                  Contact
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div>
-            <h3 className="mb-4 text-sm font-semibold">Support</h3>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/contact"
-                >
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/shipping-returns"
-                >
-                  Shipping & Returns
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/privacy-policy"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  className={`
-                    text-muted-foreground
-                    hover:text-foreground
-                  `}
-                  href="/terms-service"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
+          <div className="flex justify-center">
+            <div>
+              <h3 className="mb-4 text-sm font-semibold">Support</h3>
+              <ul className="space-y-2 text-sm">
+                <li>
+                  <Link
+                    className={`
+                      text-muted-foreground
+                      hover:text-foreground
+                    `}
+                    href="/contact"
+                  >
+                    Contact Us
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={`
+                      text-muted-foreground
+                      hover:text-foreground
+                    `}
+                    href="/shipping-returns"
+                  >
+                    Shipping & Returns
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={`
+                      text-muted-foreground
+                      hover:text-foreground
+                    `}
+                    href="/privacy-policy"
+                  >
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={`
+                      text-muted-foreground
+                      hover:text-foreground
+                    `}
+                    href="/terms-service"
+                  >
+                    Terms of Service
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
@@ -253,7 +257,7 @@ export function Footer({ className }: { className?: string }) {
               &copy; {new Date().getFullYear()} {SEO_CONFIG.name}. All rights
               reserved.
             </p>
-            <div
+            {/* <div
               className={
                 "flex items-center gap-4 text-sm text-muted-foreground"
               }
@@ -264,7 +268,7 @@ export function Footer({ className }: { className?: string }) {
               <Link className="hover:text-foreground" href="/terms-service">
                 Terms
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

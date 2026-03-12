@@ -294,6 +294,7 @@ export interface ClubProduct {
   brandLogoUrl: string | null;
   isActive: boolean;
   customFields: CustomFieldDefinition[] | null;
+  tags: string[];
   stock: number;
   createdAt: string;
   updatedAt: string;

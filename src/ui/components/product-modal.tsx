@@ -58,10 +58,10 @@ export function ProductModal({
   >({});
 
   // Dark mode logo
-  const logoSrc =
-    resolvedTheme === "dark"
-      ? "/soccerlocker-team-logo-black.png"
-      : "/soccerlocker-team-logo-white.png";
+  // const logoSrc =
+  //   resolvedTheme === "dark"
+  //     ? "/soccerlocker-team-logo-white.svg"
+  //     : "/soccerlocker-team-logo.png";
 
   // The custom field definitions from the club product
   const customFields = product?.customFields ?? [];
@@ -197,7 +197,7 @@ export function ProductModal({
           {/* Image Section */}
           <div className="relative flex flex-col bg-muted/30 p-6">
             {/* Logo */}
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <Image
                 alt="Soccer Locker"
                 src={logoSrc}
@@ -205,7 +205,7 @@ export function ProductModal({
                 height={32}
                 className="object-contain"
               />
-            </div>
+            </div> */}
 
             {/* Main Image */}
             <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-background">
@@ -343,19 +343,13 @@ export function ProductModal({
                       </label>
                       <input
                         id={`cf-${fieldKey}`}
-                        type={field.type === "number" || field.type === "date" ? "text" : field.type}
-                        inputMode={field.type === "number" || field.type === "date" ? "numeric" : undefined}
-                        maxLength={field.type === "date" ? 4 : undefined}
-                        placeholder={field.placeholder || (field.type === "date" ? "e.g. 2015" : `Enter ${field.label.toLowerCase()}`)}
+                        type={field.type === "number" ? "text" : field.type}
+                        inputMode={field.type === "number" ? "numeric" : undefined}
+                        placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
                         value={customFieldValues[fieldKey] ?? ""}
-                        onChange={(e) => {
-                          if (field.type === "date") {
-                            const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                            handleCustomFieldChange(fieldKey, val);
-                          } else {
-                            handleCustomFieldChange(fieldKey, e.target.value);
-                          }
-                        }}
+                        onChange={(e) =>
+                          handleCustomFieldChange(fieldKey, e.target.value)
+                        }
                         className={cn(
                           "mt-1.5 w-full rounded-md border bg-background px-3 py-2.5 text-sm",
                           "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",

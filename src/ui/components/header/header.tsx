@@ -4,7 +4,9 @@ import { Menu, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { useTheme } from "next-themes";
 
 import { SEO_CONFIG } from "~/app";
 import { useAuth } from "~/lib/hooks/use-auth";
@@ -24,7 +26,11 @@ interface HeaderProps {
 export function Header({ showAuth = true }: HeaderProps) {
   const pathname = usePathname();
   const { loading, user, logout } = useAuth();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   const handleLogout = async () => {
     setMobileMenuOpen(false);
@@ -65,7 +71,7 @@ export function Header({ showAuth = true }: HeaderProps) {
                 className="h-15 w-auto"
                 height={57}
                 priority
-                src="/soccerlocker-team-logo.svg"
+                src={mounted && resolvedTheme === "dark" ? "/soccerlocker-team-logo-white.svg" : "/soccerlocker-team-logo.svg"}
                 width={157}
               />
             </Link>

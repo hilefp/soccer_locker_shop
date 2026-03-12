@@ -3,7 +3,7 @@ import Image from "next/image";
 
 import type { ClubProduct } from "~/lib/api/types";
 import { cn } from "~/lib/cn";
-import { Button } from "~/ui/primitives/button";
+
 
 interface ClubProductCardProps {
   product: ClubProduct;
@@ -16,7 +16,7 @@ export function ClubProductCard({ product, onClick }: ClubProductCardProps) {
     product.imageUrls?.[0] ||
     product.product.imageUrls?.[0] ||
     product.product.imageUrl;
-  const brandLogo = product.brandLogoUrl || product.product.brand.imageUrl;
+  const brandLogo = product.brandLogoUrl || product.product.brand?.imageUrl;
 
   return (
     <button
@@ -48,7 +48,7 @@ export function ClubProductCard({ product, onClick }: ClubProductCardProps) {
           <div className="absolute right-2 top-2 h-8 w-8 overflow-hidden rounded-full bg-background/90 p-1 shadow-sm">
             <div className="relative h-full w-full">
               <Image
-                alt={product.product.brand.name}
+                alt={product.product.brand?.name || "Brand"}
                 className="object-contain"
                 fill
                 sizes="32px"
@@ -64,9 +64,9 @@ export function ClubProductCard({ product, onClick }: ClubProductCardProps) {
       <div className="flex flex-1 flex-col p-4">
         {/* Category & Brand */}
         <div className="mb-2 flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{product.product.category.name}</span>
+          <span>{product.product.category?.name}</span>
           <span>•</span>
-          <span>{product.product.brand.name}</span>
+          <span>{product.product.brand?.name}</span>
         </div>
 
         {/* Product Name */}
@@ -87,13 +87,12 @@ export function ClubProductCard({ product, onClick }: ClubProductCardProps) {
             <span className="text-lg font-bold">${product.price}</span>
           </div>
 
-          <Button
-            size="sm"
-            className="gap-1.5"
+          <span
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             <ShoppingCart className="h-4 w-4" />
             <span className="hidden sm:inline">Add</span>
-          </Button>
+          </span>
         </div>
       </div>
     </button>

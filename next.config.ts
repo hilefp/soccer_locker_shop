@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 export default {
-  eslint: { ignoreDuringBuilds: true },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
