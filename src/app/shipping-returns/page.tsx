@@ -33,26 +33,30 @@ export default function ShippingReturnsPage() {
               <div>
                 <h3 className="font-medium">Standard Shipping</h3>
                 <p className="mt-1 text-muted-foreground">
-                  5-7 business days | Free on orders over $75
+                  1 to 2 business weeks during low season 
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Orders under $75: $7.99 flat rate
+                <p className="mt-1 text-muted-foreground">
+                  6 to 8 business weeks during high season (June - November)
                 </p>
+                {/* <p className="mt-1 text-sm text-muted-foreground">
+                  Orders under 2 items: $7.99 flat rate <br />
+                  Orders under 2 items: $7.99 flat rate
+                </p> */}
               </div>
-              <div>
+              {/* <div>
                 <h3 className="font-medium">Express Shipping</h3>
                 <p className="mt-1 text-muted-foreground">
                   2-3 business days | $14.99
                 </p>
-              </div>
+              </div> */}
               <div>
                 <h3 className="font-medium">Rush Shipping</h3>
                 <p className="mt-1 text-muted-foreground">
-                  1-2 business days | $24.99
+                  5-7 business days | $100.00
                 </p>
-                <p className="mt-1 text-sm text-muted-foreground">
+                {/* <p className="mt-1 text-sm text-muted-foreground">
                   Orders must be placed before 12:00 PM EST
-                </p>
+                </p> */}
               </div>
               <div>
                 <h3 className="font-medium">Team Orders</h3>
@@ -84,41 +88,43 @@ export default function ShippingReturnsPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <RotateCcw className="h-5 w-5 text-primary" />
-                Returns & Exchanges
+                No Risk Return/Exchange Policy
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <h3 className="font-medium">Return Policy</h3>
+                <h3 className="font-medium">Returning New Items</h3>
                 <p className="mt-1 text-muted-foreground">
-                  We accept returns within 30 days of delivery for unworn, unwashed items with original tags attached.
+                  All products sold are picked by our staff, players and coaches, making our product selection unique. Here at Soccer Locker Miami we know that sometimes the item that you bought turns out to be different than what you expected. For a full refund for the cost of the item or exchange, the item must be returned in its original condition and if sold as a set (i.e. warm-up pant and jacket) it must be returned as a set.
                 </p>
               </div>
               <div>
-                <h3 className="font-medium">How to Return</h3>
-                <ol className="mt-2 list-decimal space-y-2 pl-5 text-muted-foreground">
-                  <li>Log into your account and go to Order History</li>
-                  <li>Select the item(s) you wish to return</li>
-                  <li>Print the prepaid return label</li>
-                  <li>Pack items securely and drop off at any carrier location</li>
-                </ol>
-              </div>
-              <div>
-                <h3 className="font-medium">Exchanges</h3>
+                <h3 className="font-medium">Exchange Shipping</h3>
                 <p className="mt-1 text-muted-foreground">
-                  Need a different size? We offer free exchanges for size-related issues. Simply initiate a return and place a new order for the correct size.
+                  For exchange items, the customer will pay for the shipping charges back to Soccer Locker and we will pay for the shipping back to the customer. Almost all items that have been worn outside (especially shoes) will show signs of wear and will no longer be in original condition, thus it is important to try everything on indoors or we cannot accept or process your return.
                 </p>
               </div>
               <div>
-                <h3 className="font-medium">Custom & Personalized Items</h3>
+                <h3 className="font-medium">Wrong Item Received</h3>
                 <p className="mt-1 text-muted-foreground">
-                  Custom items with names, numbers, or other personalization cannot be returned or exchanged unless there is a manufacturing defect.
+                  If we sent you the wrong item in error, we will, of course, pay the shipping costs. We ship all exchange orders back to you for FREE (UPS Ground service) in consideration of our error and the welfare of your business with us.
                 </p>
               </div>
               <div>
-                <h3 className="font-medium">Refund Processing</h3>
+                <h3 className="font-medium">Return Shipping Address</h3>
                 <p className="mt-1 text-muted-foreground">
-                  Refunds are processed within 5-7 business days of receiving your return. The refund will be credited to your original payment method.
+                  Please ship your return package either UPS or insured US Mail (remember to keep your receipt and tracking number) to:
+                </p>
+                <address className="mt-2 not-italic text-muted-foreground">
+                  Soccer Locker Team Department<br />
+                  8810 SW 131st St<br />
+                  Miami, FL 33176
+                </address>
+              </div>
+              <div>
+                <h3 className="font-medium">Important Notes</h3>
+                <p className="mt-1 text-muted-foreground">
+                  We cannot accept COD&apos;s or packages marked &quot;Bill Recipient&quot;. Please keep the receipt or tracking number of your returned package in the event it is delayed or lost in transit. All refunds will be for merchandise only; we cannot refund shipping costs unless the item was sent in error.
                 </p>
               </div>
             </CardContent>
@@ -131,12 +137,12 @@ export default function ShippingReturnsPage() {
             <CardContent>
               <p className="text-muted-foreground">
                 If you have any questions about shipping or returns, please contact our customer service team at{" "}
-                <a href="mailto:info@soccerlocker.com" className="text-primary hover:underline">
-                  info@soccerlocker.com
+                <a href="mailto:teamorder@soccerlocker.com" className="text-primary hover:underline">
+                  teamorder@soccerlocker.com
                 </a>{" "}
                 or call us at{" "}
-                <a href="tel:+1234567890" className="text-primary hover:underline">
-                  (123) 456-7890
+                <a href="tel:+7867018057" className="text-primary hover:underline">
+                  (786) 701-8057
                 </a>.
               </p>
             </CardContent>
