@@ -28,7 +28,7 @@ export default async function HomePage() {
     <main className="min-h-screen bg-background">
       {/* Hero Carousel */}
       <section>
-        <HeroCarousel className="h-[35vh] min-h-[300px]" slides={carouselSlides} />
+        <HeroCarousel className="h-[50vh] min-h-[500px]" slides={carouselSlides} />
       </section>
 
       {/* Pick Your Team Section */}
