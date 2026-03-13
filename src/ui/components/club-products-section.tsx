@@ -111,10 +111,16 @@ export function ClubProductsSection({
 
   const getDisplayImages = () => {
     if (!selectedProduct) return [];
+    // If club product has custom images, use only those
+    if (selectedProduct.imageUrls?.length) {
+      return selectedProduct.imageUrls;
+    }
+    // Fall back to base product images
     const images: string[] = [];
-    if (selectedProduct.imageUrls?.length) images.push(...selectedProduct.imageUrls);
     if (selectedProduct.product.imageUrls?.length) images.push(...selectedProduct.product.imageUrls);
-    if (selectedProduct.product.imageUrl) images.push(selectedProduct.product.imageUrl);
+    if (selectedProduct.product.imageUrl && !images.includes(selectedProduct.product.imageUrl)) {
+      images.push(selectedProduct.product.imageUrl);
+    }
     return images;
   };
 

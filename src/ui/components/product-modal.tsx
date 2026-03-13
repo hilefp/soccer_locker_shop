@@ -322,6 +322,27 @@ export function ProductModal({
                     </select>
                   </div>
                 ))}
+
+                {/* Stock Availability */}
+                {selectedVariant?.availability && (
+                  <p
+                    className={cn("text-xs font-medium mt-1", {
+                      "text-green-600":
+                        selectedVariant.availability.status === "IN_STOCK",
+                      "text-amber-600":
+                        selectedVariant.availability.status === "LOW_STOCK",
+                      "text-destructive":
+                        selectedVariant.availability.status === "OUT_OF_STOCK",
+                    })}
+                  >
+                    {selectedVariant.availability.status === "IN_STOCK" &&
+                      "In Stock"}
+                    {selectedVariant.availability.status === "LOW_STOCK" &&
+                      "Low Stock — Only a few left"}
+                    {selectedVariant.availability.status === "OUT_OF_STOCK" &&
+                      "Backordered"}
+                  </p>
+                )}
               </div>
             )}
 
@@ -343,8 +364,8 @@ export function ProductModal({
                       </label>
                       <input
                         id={`cf-${fieldKey}`}
-                        type={field.type === "number" ? "text" : field.type}
-                        inputMode={field.type === "number" ? "numeric" : undefined}
+                        type={field.type === "number" || field.type === "date" ? "text" : field.type}
+                        inputMode={field.type === "number" || field.type === "date" ? "numeric" : undefined}
                         placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
                         value={customFieldValues[fieldKey] ?? ""}
                         onChange={(e) =>

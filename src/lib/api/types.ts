@@ -266,6 +266,10 @@ export interface ProductVariant {
   imageUrl: string | null;
   isActive: boolean;
   imageUrls: string[];
+  availability?: {
+    status: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
+    totalAvailable: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
