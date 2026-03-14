@@ -156,8 +156,12 @@ export function getEstimatedDelivery(order: Order): string {
   }
 
   const createdDate = new Date(order.createdAt);
+  const month = createdDate.getMonth(); // 0-indexed: 0=Jan, 11=Dec
+  const isOffSeason = month >= 5 && month <= 10; // Jun (5) to Nov (10)
+  const daysToAdd = isOffSeason ? 56 : 21; // Dec-May: 21 days, Jun-Nov: 56 days
+
   const estimatedDate = new Date(createdDate);
-  estimatedDate.setDate(estimatedDate.getDate() + 5); // Add 5 business days
+  estimatedDate.setDate(estimatedDate.getDate() + daysToAdd);
 
   return estimatedDate.toLocaleDateString("en-US", {
     year: "numeric",
