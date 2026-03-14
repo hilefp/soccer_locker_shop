@@ -44,29 +44,61 @@ export function ClubProductClient({
   // The custom field definitions from the club product
   const customFields = product?.customFields ?? [];
 
-  // Get the display value for a variant's size attribute
-  const getVariantSize = (variant: ProductVariant) => {
-    const attrKey = Object.keys(variant.attributes)[0];
-    return attrKey ? variant.attributes[attrKey] : variant.sku;
-  };
+  // Flatten all variants into a single list with display labels, sorted XS → XL
+  const allVariants = React.useMemo(() => {
+    if (!product?.product.variants) return [];
 
-  // Group variants by their attribute key (e.g. "All Sizes", "Size Type", etc.)
-  const variantsByType = React.useMemo(() => {
-    if (!product?.product.variants) return {};
+    const sizeOrder: Record<string, number> = {
+      "x-small": 0, "xs": 0,
+      "small": 1, "s": 1,
+      "medium": 2, "m": 2,
+      "large": 3, "l": 3,
+      "x-large": 4, "xl": 4,
+      "xx-large": 5, "xxl": 5,
+    };
+
+    const groupOrder: Record<string, number> = {
+      youth: 0,
+      women: 1,
+      adult: 2,
+    };
+
+    const getGroupRank = (label: string) => {
+      const lower = label.toLowerCase();
+      for (const [key, rank] of Object.entries(groupOrder)) {
+        if (lower.startsWith(key)) return rank;
+      }
+      return 99;
+    };
+
+    const sizeKeys = Object.entries(sizeOrder).sort(
+      ([a], [b]) => b.length - a.length,
+    );
+
+    const getSizeRank = (label: string) => {
+      const lower = label.toLowerCase();
+      for (const [key, rank] of sizeKeys) {
+        if (lower.endsWith(key) || lower.endsWith(key.replace("-", " "))) {
+          return rank;
+        }
+      }
+      return 99;
+    };
+
     return product.product.variants
       .filter((v) => Object.keys(v.attributes).length > 0)
-      .reduce(
-        (acc, variant) => {
-          const attrKey = Object.keys(variant.attributes)[0];
-          if (!acc[attrKey]) acc[attrKey] = [];
-          acc[attrKey].push(variant);
-          return acc;
-        },
-        {} as Record<string, ProductVariant[]>,
-      );
+      .map((variant) => {
+        const attrKey = Object.keys(variant.attributes)[0];
+        const attrValue = attrKey ? variant.attributes[attrKey] : variant.sku;
+        const label = attrValue;
+        return { ...variant, label };
+      })
+      .sort((a, b) => {
+        const groupDiff = getGroupRank(a.label) - getGroupRank(b.label);
+        if (groupDiff !== 0) return groupDiff;
+        return getSizeRank(a.label) - getSizeRank(b.label);
+      });
   }, [product]);
-
-  const sizeTypes = Object.keys(variantsByType);
 
   // Handle custom field change
   const handleCustomFieldChange = (key: string, value: string) => {
@@ -98,7 +130,7 @@ export function ClubProductClient({
     }
 
     setIsAdding(true);
-    const sizeLabel = getVariantSize(selectedVariant);
+    const sizeLabel = allVariants.find((v) => v.id === selectedVariant.id)?.label ?? selectedVariant.sku;
 
     // Build custom fields object with labels as keys for display
     const customFieldsData =
@@ -211,31 +243,27 @@ export function ClubProductClient({
         )}
 
         {/* Size Selector */}
-        {sizeTypes.length > 0 && (
-          <div className="mt-6 space-y-4">
-            {sizeTypes.map((type) => (
-              <div key={type}>
-                <span className="text-sm font-medium text-muted-foreground">
-                  {type}
-                </span>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {variantsByType[type].map((variant) => (
-                    <button
-                      key={variant.id}
-                      onClick={() => setSelectedVariant(variant)}
-                      className={cn(
-                        "min-w-[3rem] rounded-md border px-3 py-2 text-sm font-medium transition-all",
-                        selectedVariant?.id === variant.id
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-background hover:border-primary hover:bg-accent",
-                      )}
-                    >
-                      {getVariantSize(variant)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
+        {allVariants.length > 0 && (
+          <div className="mt-6">
+            <span className="text-sm font-medium text-muted-foreground">
+              Size
+            </span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {allVariants.map((variant) => (
+                <button
+                  key={variant.id}
+                  onClick={() => setSelectedVariant(variant)}
+                  className={cn(
+                    "min-w-[3rem] rounded-md border px-3 py-2 text-sm font-medium transition-all",
+                    selectedVariant?.id === variant.id
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background hover:border-primary hover:bg-accent",
+                  )}
+                >
+                  {variant.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -329,7 +357,7 @@ export function ClubProductClient({
           </Button>
         </div>
 
-        {!selectedVariant && sizeTypes.length > 0 && (
+        {!selectedVariant && allVariants.length > 0 && (
           <p className="mt-2 text-sm text-muted-foreground">
             Please select a size to add to cart
           </p>
