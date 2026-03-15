@@ -18,27 +18,21 @@ if (!JWT_SECRET) {
 export async function verifyToken(
   token: string,
 ): Promise<JWTPayload | null> {
+  // Try UTF-8 encoding first (standard approach)
   try {
-    // TEMP DEBUG: Log what secret Vercel is actually using
-    console.log("🔑 JWT_SECRET first 10 chars:", JWT_SECRET?.substring(0, 10));
-    console.log("🔑 JWT_SECRET length:", JWT_SECRET?.length);
-    console.log("🔑 JWT_SECRET last 5 chars:", JWT_SECRET?.slice(-5));
-
-    // First, decode without verification to see what's inside
-    const decoded = jose.decodeJwt(token);
-
     const secret = new TextEncoder().encode(JWT_SECRET);
     const { payload } = await jose.jwtVerify(token, secret);
+    return payload as unknown as JWTPayload;
+  } catch {
+    // UTF-8 failed, try base64-decoded secret (NestJS may decode base64 secrets)
+  }
 
+  try {
+    const secret = Buffer.from(JWT_SECRET!, "base64");
+    const { payload } = await jose.jwtVerify(token, new Uint8Array(secret));
     return payload as unknown as JWTPayload;
   } catch (error) {
     console.error("❌ JWT verification failed:", error);
-    // Also decode to see what was in the token
-    try {
-      const decoded = jose.decodeJwt(token);
-    } catch (decodeError) {
-      console.error("Failed to decode token:", decodeError);
-    }
     return null;
   }
 }
