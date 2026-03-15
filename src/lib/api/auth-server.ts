@@ -19,6 +19,11 @@ export async function verifyToken(
   token: string,
 ): Promise<JWTPayload | null> {
   try {
+    // TEMP DEBUG: Log what secret Vercel is actually using
+    console.log("🔑 JWT_SECRET first 10 chars:", JWT_SECRET?.substring(0, 10));
+    console.log("🔑 JWT_SECRET length:", JWT_SECRET?.length);
+    console.log("🔑 JWT_SECRET last 5 chars:", JWT_SECRET?.slice(-5));
+
     // First, decode without verification to see what's inside
     const decoded = jose.decodeJwt(token);
 
