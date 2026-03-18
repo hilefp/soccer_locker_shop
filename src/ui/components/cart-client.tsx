@@ -102,7 +102,7 @@ export function CartClient({ className }: CartProps) {
 
   const CartContent = (
     <>
-      <div className="flex flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div>
             <div className="text-xl font-semibold">Your Cart</div>
@@ -144,13 +144,13 @@ export function CartClient({ className }: CartProps) {
                 </p>
                 {isDesktop ? (
                   <SheetClose asChild>
-                    <Link href="/products">
+                    <Link href="/teams">
                       <Button>Browse Products</Button>
                     </Link>
                   </SheetClose>
                 ) : (
                   <DrawerClose asChild>
-                    <Link href="/products">
+                    <Link href="/teams">
                       <Button>Browse Products</Button>
                     </Link>
                   </DrawerClose>
@@ -356,7 +356,7 @@ export function CartClient({ className }: CartProps) {
       {isDesktop ? (
         <Sheet onOpenChange={setIsOpen} open={isOpen}>
           <SheetTrigger asChild>{CartTrigger}</SheetTrigger>
-          <SheetContent className="flex w-[400px] flex-col p-0">
+          <SheetContent className="flex w-[400px] flex-col overflow-hidden p-0">
             <SheetHeader>
               <SheetTitle>Shopping Cart</SheetTitle>
             </SheetHeader>

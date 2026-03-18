@@ -156,6 +156,7 @@ export function OrdersPageClient() {
                 No orders found.
               </div>
             ) : (
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -194,13 +195,14 @@ export function OrdersPageClient() {
                   ))}
                 </TableBody>
               </Table>
+              </div>
             )}
           </CardContent>
         </Card>
       </div>
 
       <Dialog onOpenChange={setDialogOpen} open={dialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               Order #{selectedOrder?.orderNumber || ""}
