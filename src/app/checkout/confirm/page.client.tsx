@@ -55,9 +55,9 @@ export function ConfirmPageClient() {
           toast.success("Payment confirmed!");
 
           // Send invoice email (fire-and-forget)
-          apiPost(`/api/shop/orders/${result.orderNumber}/send-invoice`, {}).catch((err) => {
-            console.error("Failed to send invoice email:", err);
-          });
+          // apiPost(`/api/shop/orders/${result.orderNumber}/send-invoice`, {}).catch((err) => {
+          //   console.error("Failed to send invoice email:", err);
+          // });
         } else {
           setStatus("failed");
           setErrorMessage(
