@@ -285,6 +285,7 @@ export interface CustomFieldDefinition {
   label: string;
   placeholder: string;
   value?: string;
+  options?: string[];
 }
 
 export interface ClubProduct {
