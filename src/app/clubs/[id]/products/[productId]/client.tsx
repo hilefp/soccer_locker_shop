@@ -283,29 +283,55 @@ export function ClubProductClient({
                       <span className="text-destructive ml-0.5">*</span>
                     )}
                   </label>
-                  <input
-                    id={`cf-${fieldKey}`}
-                    type={field.type === "number" || field.type === "date" ? "text" : field.type}
-                    inputMode={field.type === "number" || field.type === "date" ? "numeric" : undefined}
-                    maxLength={field.type === "date" ? 4 : undefined}
-                    placeholder={field.placeholder || (field.type === "date" ? "e.g. 2015" : `Enter ${field.label.toLowerCase()}`)}
-                    value={customFieldValues[fieldKey] ?? ""}
-                    onChange={(e) => {
-                      if (field.type === "date") {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                        handleCustomFieldChange(fieldKey, val);
-                      } else {
-                        handleCustomFieldChange(fieldKey, e.target.value);
+                  {field.type === "select" && field.options ? (
+                    <select
+                      id={`cf-${fieldKey}`}
+                      value={customFieldValues[fieldKey] ?? ""}
+                      onChange={(e) =>
+                        handleCustomFieldChange(fieldKey, e.target.value)
                       }
-                    }}
-                    className={cn(
-                      "mt-1.5 w-full rounded-md border bg-background px-3 py-2.5 text-sm",
-                      "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
-                      customFieldErrors[fieldKey]
-                        ? "border-destructive"
-                        : "border-border",
-                    )}
-                  />
+                      className={cn(
+                        "mt-1.5 w-full rounded-md border bg-background px-3 py-2.5 text-sm",
+                        "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                        customFieldErrors[fieldKey]
+                          ? "border-destructive"
+                          : "border-border",
+                      )}
+                    >
+                      <option value="">
+                        {field.placeholder || `Select ${field.label.toLowerCase()}`}
+                      </option>
+                      {field.options.map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      id={`cf-${fieldKey}`}
+                      type={field.type === "number" || field.type === "date" ? "text" : field.type}
+                      inputMode={field.type === "number" || field.type === "date" ? "numeric" : undefined}
+                      maxLength={field.type === "date" ? 4 : undefined}
+                      placeholder={field.placeholder || (field.type === "date" ? "e.g. 2015" : `Enter ${field.label.toLowerCase()}`)}
+                      value={customFieldValues[fieldKey] ?? ""}
+                      onChange={(e) => {
+                        if (field.type === "date") {
+                          const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                          handleCustomFieldChange(fieldKey, val);
+                        } else {
+                          handleCustomFieldChange(fieldKey, e.target.value);
+                        }
+                      }}
+                      className={cn(
+                        "mt-1.5 w-full rounded-md border bg-background px-3 py-2.5 text-sm",
+                        "focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20",
+                        customFieldErrors[fieldKey]
+                          ? "border-destructive"
+                          : "border-border",
+                      )}
+                    />
+                  )}
                   {customFieldErrors[fieldKey] && (
                     <p className="mt-1 text-xs text-destructive">
                       {field.label} is required
