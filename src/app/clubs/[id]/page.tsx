@@ -24,7 +24,7 @@ export default async function ClubPage({ params }: ClubPageProps) {
     page: 1,
     limit: 50,
     isActive: true,
-    sortBy: "createdAt" as any,
+    sortBy: "price" as any,
     sortOrder: "desc" as any,
   });
 

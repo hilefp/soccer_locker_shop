@@ -301,6 +301,7 @@ export interface ClubProduct {
   customFields: CustomFieldDefinition[] | null;
   tags: string[];
   stock: number;
+  sortOrder: number;
   createdAt: string;
   updatedAt: string;
   product: Product;
@@ -342,6 +343,7 @@ export enum SortBy {
   PRICE = "price",
   CREATED_AT = "createdAt",
   STOCK = "stock",
+  SORT_ORDER = "sortOrder",
 }
 
 export interface ClubProductFilters {

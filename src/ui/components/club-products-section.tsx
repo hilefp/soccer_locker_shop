@@ -26,7 +26,7 @@ export function ClubProductsSection({
   tags,
 }: ClubProductsSectionProps) {
   const [products, setProducts] = useState<ClubProduct[]>(initialProducts);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(tags[0] ?? null);
   const [isLoading, setIsLoading] = useState(false);
 
   // Modal state
@@ -34,10 +34,7 @@ export function ClubProductsSection({
   const [selectedProduct, setSelectedProduct] = useState<ClubProductDetail | null>(null);
   const [isLoadingProduct, setIsLoadingProduct] = useState(false);
 
-  const tagGroups = [
-    { id: null, label: "All Products" },
-    ...tags.map((tag) => ({ id: tag, label: tag })),
-  ];
+  const tagGroups = tags.map((tag) => ({ id: tag, label: tag }));
 
   useEffect(() => {
     // Reset to initial products when "All Products" is selected
@@ -53,7 +50,7 @@ export function ClubProductsSection({
           page: 1,
           limit: 50,
           isActive: true,
-          sortBy: "createdAt" as any,
+          sortBy: "price" as any,
           sortOrder: "desc" as any,
           tags: selectedTag ?? undefined,
         };
@@ -125,7 +122,7 @@ export function ClubProductsSection({
   };
 
   const activeTagLabel =
-    tagGroups.find((t) => t.id === selectedTag)?.label || "All Products";
+    tagGroups.find((t) => t.id === selectedTag)?.label || tags[0] || "";
 
   return (
     <>
