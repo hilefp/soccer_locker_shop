@@ -109,7 +109,11 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
         if (!response.ok) {
           const error = (await response.json()) as { error?: string };
           console.error("❌ Login failed:", error);
-          throw new Error(error.error || "Login failed");
+          throw new Error(
+            response.status === 401
+              ? "Invalid email or password"
+              : error.error || "Login failed",
+          );
         }
 
         const data = (await response.json()) as { token: string; user: ShopCustomer };

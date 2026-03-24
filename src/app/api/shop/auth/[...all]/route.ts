@@ -60,16 +60,28 @@ export async function POST(
     // Login endpoint
     if (route === "login") {
       const body = (await request.json()) as ShopLoginRequest;
-      const authResponse = await loginShopCustomer(body);
 
-      // Set HTTP-only cookie
-      await setAuthCookie(authResponse.accessToken);
+      try {
+        const authResponse = await loginShopCustomer(body);
 
-      return NextResponse.json({
-        success: true,
-        token: authResponse.accessToken,
-        user: authResponse.user,
-      });
+        // Set HTTP-only cookie
+        await setAuthCookie(authResponse.accessToken);
+
+        return NextResponse.json({
+          success: true,
+          token: authResponse.accessToken,
+          user: authResponse.user,
+        });
+      } catch (loginError) {
+        const statusCode =
+          loginError && typeof loginError === "object" && "statusCode" in loginError
+            ? (loginError as { statusCode: number }).statusCode
+            : 500;
+        return NextResponse.json(
+          { error: statusCode === 401 ? "Invalid email or password" : "Login failed" },
+          { status: statusCode },
+        );
+      }
     }
 
     // Forgot password endpoint
