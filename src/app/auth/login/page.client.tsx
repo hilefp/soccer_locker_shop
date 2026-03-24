@@ -43,7 +43,7 @@ export function LoginPageClient() {
       router.push(SYSTEM_CONFIG.redirectAfterSignIn);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Invalid email or password",
+        err instanceof Error ? err.message : "Something went wrong. Please try again.",
       );
       console.error(err);
     }
