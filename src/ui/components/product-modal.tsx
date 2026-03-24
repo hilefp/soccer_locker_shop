@@ -187,12 +187,13 @@ export function ProductModal({
 
     addItem(
       {
-        id: `${selectedVariant.id}`,
+        id: `${product.id}-${selectedVariant.id}`,
         name: `${displayName} - ${sizeLabel}`,
         price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
         image: displayImages[0] || "",
         category: categoryName,
         clubId,
+        clubProductId: product.id,
         variantId: selectedVariant.id,
         customFields: customFieldsData,
       },
