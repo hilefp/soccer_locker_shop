@@ -156,6 +156,7 @@ export function CheckoutPageClient() {
             productVariantId,
             quantity: item.quantity,
             customFields: item.customFields,
+            clubProductId: item.clubProductId,
           });
         }
 

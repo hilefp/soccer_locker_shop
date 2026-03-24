@@ -5,6 +5,7 @@ import { CartClient } from "./cart-client";
 export interface CartItem {
   category: string;
   clubId?: string;
+  clubProductId?: string;
   customFields?: Record<string, any>;
   id: string;
   image: string;

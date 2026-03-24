@@ -88,7 +88,7 @@ export function ClubProductsSection({
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
       const response = await fetch(
-        `${apiUrl}/api/shop/clubs/${clubId}/products/${product.productId}`
+        `${apiUrl}/api/shop/clubs/${clubId}/products/${product.id}`
       );
       const data = (await response.json()) as ClubProductDetail;
       setSelectedProduct(data);
