@@ -59,14 +59,16 @@ export function ClubProductClient({
 
     const groupOrder: Record<string, number> = {
       youth: 0,
+      kid: 0,
       women: 1,
       adult: 2,
+      men: 2,
     };
 
     const getGroupRank = (label: string) => {
       const lower = label.toLowerCase();
       for (const [key, rank] of Object.entries(groupOrder)) {
-        if (lower.startsWith(key)) return rank;
+        if (lower.includes(key)) return rank;
       }
       return 99;
     };
@@ -77,8 +79,13 @@ export function ClubProductClient({
 
     const getSizeRank = (label: string) => {
       const lower = label.toLowerCase();
+      // Check against the base label (before any parenthetical)
+      const baseLower = lower.split("(")[0].trim();
       for (const [key, rank] of sizeKeys) {
-        if (lower.endsWith(key) || lower.endsWith(key.replace("-", " "))) {
+        const normalizedKey = key.replace("-", " ");
+        if (baseLower === key || baseLower === normalizedKey ||
+            baseLower.endsWith(key) || baseLower.endsWith(normalizedKey) ||
+            lower.endsWith(key) || lower.endsWith(normalizedKey)) {
           return rank;
         }
       }
@@ -99,6 +106,13 @@ export function ClubProductClient({
         return getSizeRank(a.label) - getSizeRank(b.label);
       });
   }, [product]);
+
+  // Auto-select variant for products without attributes (backpacks, caps, etc.)
+  React.useEffect(() => {
+    if (allVariants.length === 0 && product?.product.variants.length > 0) {
+      setSelectedVariant(product.product.variants[0]);
+    }
+  }, [allVariants, product]);
 
   // Handle custom field change
   const handleCustomFieldChange = (key: string, value: string) => {

@@ -92,14 +92,16 @@ export function ProductModal({
 
     const groupOrder: Record<string, number> = {
       youth: 0,
+      kid: 0,
       women: 1,
       adult: 2,
+      men: 2,
     };
 
     const getGroupRank = (label: string) => {
       const lower = label.toLowerCase();
       for (const [key, rank] of Object.entries(groupOrder)) {
-        if (lower.startsWith(key)) return rank;
+        if (lower.includes(key)) return rank;
       }
       return 99;
     };
@@ -110,8 +112,13 @@ export function ProductModal({
 
     const getSizeRank = (label: string) => {
       const lower = label.toLowerCase();
+      // Check against the base label (before any parenthetical)
+      const baseLower = lower.split("(")[0].trim();
       for (const [key, rank] of sizeKeys) {
-        if (lower.endsWith(key) || lower.endsWith(key.replace("-", " "))) {
+        const normalizedKey = key.replace("-", " ");
+        if (baseLower === key || baseLower === normalizedKey ||
+            baseLower.endsWith(key) || baseLower.endsWith(normalizedKey) ||
+            lower.endsWith(key) || lower.endsWith(normalizedKey)) {
           return rank;
         }
       }
@@ -132,6 +139,14 @@ export function ProductModal({
         return getSizeRank(a.label) - getSizeRank(b.label);
       });
   }, [product]);
+
+  // Auto-select variant for products without attributes (backpacks, caps, etc.)
+  React.useEffect(() => {
+    const variants = product?.product?.variants;
+    if (allVariants.length === 0 && variants && variants.length > 0) {
+      setSelectedVariant(variants[0]);
+    }
+  }, [allVariants, product]);
 
   // Handle variant selection from select
   const handleVariantChange = (_sizeType: string, variantId: string) => {
