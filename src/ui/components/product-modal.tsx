@@ -399,8 +399,10 @@ export function ProductModal({
                         className="text-xs font-semibold uppercase tracking-wider"
                       >
                         {field.label}
-                        {field.required && (
+                        {field.required ? (
                           <span className="text-destructive ml-0.5">*</span>
+                        ) : (
+                          <span className="text-muted-foreground ml-1 font-normal normal-case tracking-normal">(Optional)</span>
                         )}
                       </label>
                       {field.type === "select" && field.options ? (
