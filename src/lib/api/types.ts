@@ -427,6 +427,7 @@ export interface OrderItem {
   orderId: string;
   productVariantId: string;
   name: string;
+  clubProduct: { name: string } | null;
   sku: string;
   attributes: Record<string, string> | null;
   customFields: Record<string, any> | null;
