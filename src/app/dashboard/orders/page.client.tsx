@@ -235,7 +235,7 @@ export function OrdersPageClient() {
                       key={item.id}
                     >
                       <p className="font-medium text-sm leading-tight">
-                        {item.name}
+                        {item.clubProduct?.name || item.name}
                       </p>
                       <div className="flex items-center justify-between text-sm text-muted-foreground">
                         <span>SKU: {item.sku}</span>

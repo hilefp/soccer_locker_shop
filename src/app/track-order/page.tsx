@@ -160,7 +160,7 @@ function TrackOrderContent() {
                     <ul className="space-y-1">
                       {orderData.items.map((item) => (
                         <li key={item.id}>
-                          <p className="font-semibold">{item.name} x{item.quantity}</p>
+                          <p className="font-semibold">{item.clubProduct?.name || item.name} x{item.quantity}</p>
                           <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
                           {item.attributes && Object.keys(item.attributes).length > 0 && (
                             <p className="text-sm text-muted-foreground">
@@ -190,7 +190,7 @@ function TrackOrderContent() {
                       {orderData.items.filter((i) => i.missingQuantity > 0).map((item) => (
                         <li className="flex items-center justify-between text-sm" key={item.id}>
                           <span className="text-yellow-900 dark:text-yellow-300">
-                            {item.name} {item.attributes && Object.keys(item.attributes).length > 0 ? `(${Object.values(item.attributes)[0]})` : ""}
+                            {item.clubProduct?.name || item.name} {item.attributes && Object.keys(item.attributes).length > 0 ? `(${Object.values(item.attributes)[0]})` : ""}
                           </span>
                           <span className="text-yellow-700 dark:text-yellow-400">
                             {item.missingQuantity} of {item.quantity} missing
