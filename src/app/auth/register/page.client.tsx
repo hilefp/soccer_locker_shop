@@ -14,6 +14,14 @@ import { registerSchema } from "~/lib/validations/auth";
 import type { RegisterFormData } from "~/lib/validations/auth";
 import { Button } from "~/ui/primitives/button";
 import { Card, CardContent } from "~/ui/primitives/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/ui/primitives/dialog";
 import { Input } from "~/ui/primitives/input";
 import { Label } from "~/ui/primitives/label";
 
@@ -21,6 +29,7 @@ export function RegisterPageClient() {
   const router = useRouter();
   const { register: registerUser } = useAuth();
   const [step, setStep] = useState(1);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const {
     register,
@@ -67,8 +76,7 @@ export function RegisterPageClient() {
       // Remove confirmPassword before sending
       const { confirmPassword: _confirmPassword, ...registerData } = data;
       await registerUser(registerData);
-      toast.success("Registration successful!");
-      router.push(SYSTEM_CONFIG.redirectAfterSignUp);
+      setShowSuccessDialog(true);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Registration failed",
@@ -369,6 +377,38 @@ export function RegisterPageClient() {
           </Card>
         </div>
       </div>
+      <Dialog
+        open={showSuccessDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowSuccessDialog(false);
+            router.push(SYSTEM_CONFIG.redirectAfterSignUp);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registration Successful!</DialogTitle>
+            <DialogDescription>
+              A confirmation email has been sent to verify your email address.
+              You can start shopping right away. However, please verify your
+              email address within <strong>7 days</strong> to keep your account
+              active. If your email is not verified within this period, your
+              account will be deactivated.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShowSuccessDialog(false);
+                router.push(SYSTEM_CONFIG.redirectAfterSignUp);
+              }}
+            >
+              Got it
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
