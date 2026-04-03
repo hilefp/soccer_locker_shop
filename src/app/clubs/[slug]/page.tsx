@@ -2,22 +2,24 @@ import { Mail } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-import { getClubById, getClubProducts, getClubProductTags } from "~/lib/api/clubs";
+import { getClubBySlug, getClubProducts, getClubProductTags } from "~/lib/api/clubs";
 import { ClubProductsSection } from "~/ui/components/club-products-section";
 
 interface ClubPageProps {
   params: Promise<{
-    id: string;
+    slug: string;
   }>;
 }
 
 export default async function ClubPage({ params }: ClubPageProps) {
-  const { id } = await params;
-  const club = await getClubById(id);
+  const { slug } = await params;
+  const club = await getClubBySlug(slug);
 
   if (!club) {
     notFound();
   }
+
+  const id = club.id;
 
   // Fetch initial products
   const productsData = await getClubProducts(id, {

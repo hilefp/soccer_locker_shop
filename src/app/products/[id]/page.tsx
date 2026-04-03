@@ -305,7 +305,7 @@ export default function ProductDetailPage() {
             <p className="mt-4">
               The product you&apos;re looking for doesn&apos;t exist.
             </p>
-            <Button className="mt-6" onClick={() => router.push("/products")}>
+            <Button className="mt-6" onClick={() => router.push("/teams")}>
               Back to Products
             </Button>
           </div>

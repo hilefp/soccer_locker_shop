@@ -2,18 +2,25 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getClubProduct } from "~/lib/api/clubs";
+import { getClubBySlug, getClubProduct } from "~/lib/api/clubs";
 import { ClubProductClient } from "./client";
 
 interface ClubProductPageProps {
   params: Promise<{
-    id: string;
+    slug: string;
     productId: string;
   }>;
 }
 
 export default async function ClubProductPage({ params }: ClubProductPageProps) {
-  const { id, productId } = await params;
+  const { slug, productId } = await params;
+  const club = await getClubBySlug(slug);
+
+  if (!club) {
+    notFound();
+  }
+
+  const id = club.id;
   const product = await getClubProduct(id, productId);
 
   if (!product) {
@@ -39,8 +46,8 @@ export default async function ClubProductPage({ params }: ClubProductPageProps) 
               Home
             </Link>
             <ChevronRight className="h-4 w-4" />
-            <Link href={`/clubs/${id}`} className="hover:text-foreground">
-              Club
+            <Link href={`/clubs/${slug}`} className="hover:text-foreground">
+              {club.name}
             </Link>
             <ChevronRight className="h-4 w-4" />
             <span className="text-foreground">{displayName}</span>
