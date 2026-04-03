@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { Club } from "~/lib/api/types";
 import { cn } from "~/lib/cn";
+import { slugify } from "~/lib/slugify";
 
 interface ClubCardProps {
   club: Club;
@@ -23,7 +24,7 @@ export function ClubCard({ club }: ClubCardProps) {
         "transition-all duration-300 hover:scale-105",
         "hover:shadow-xl hover:border-primary/30",
       )}
-      href={`/clubs/${club.id}`}
+      href={`/clubs/${slugify(club.name)}`}
     >
       <div className="relative h-full w-full p-6">
         {clubImage ? (

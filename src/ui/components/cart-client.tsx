@@ -183,16 +183,14 @@ export function CartClient({ className }: CartProps) {
                     <div className="ml-4 flex flex-1 flex-col justify-between">
                       <div>
                         <div className="flex items-start justify-between">
-                          <Link
+                          <p
                             className={`
                               line-clamp-2 text-sm font-medium
                               group-hover:text-primary
                             `}
-                            href={`/products/${item.id}`}
-                            onClick={() => setIsOpen(false)}
                           >
                             {item.name}
-                          </Link>
+                          </p>
                           <button
                             className={`
                               -mt-1 -mr-1 ml-2 rounded-full p-1

@@ -1,5 +1,6 @@
 import { apiGetServer } from "~/lib/api/client-server";
 import type { Club, ClubProductDetail, ClubProductFilters, ClubProductsResponse } from "~/lib/api/types";
+import { slugify } from "~/lib/slugify";
 
 /**
  * Fetch all active clubs from the API (server-side)
@@ -23,6 +24,19 @@ export async function getClubById(id: string): Promise<Club | null> {
     return club.isActive ? club : null;
   } catch (error) {
     console.error(`Error fetching club ${id}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Fetch a single club by its URL slug (server-side)
+ */
+export async function getClubBySlug(slug: string): Promise<Club | null> {
+  try {
+    const clubs = await getClubs();
+    return clubs.find((club) => slugify(club.name) === slug) ?? null;
+  } catch (error) {
+    console.error(`Error fetching club by slug ${slug}:`, error);
     return null;
   }
 }
