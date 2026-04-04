@@ -151,6 +151,8 @@ export function CheckoutPageClient() {
 
         for (const item of currentItems) {
           if (cancelled) return;
+          // Skip virtual package header rows — they have no real variantId
+          if (item.isPackageHeader) continue;
           const productVariantId = item.variantId || item.id;
           await apiPost("/api/shop/cart/items", {
             productVariantId,
@@ -254,7 +256,7 @@ export function CheckoutPageClient() {
             <p className="mb-6 text-sm text-muted-foreground">
               Add some items to your cart before checking out.
             </p>
-            <Link href="/products">
+            <Link href="/teams">
               <Button>Browse Products</Button>
             </Link>
           </CardContent>
@@ -534,8 +536,13 @@ export function CheckoutPageClient() {
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {items.map((item) => (
-                <div className="flex gap-3" key={item.id}>
+              {items.map((item) => {
+                const isSubItem = !!item.packageId && !item.isPackageHeader;
+                return (
+                <div
+                  className={isSubItem ? "flex gap-3 ml-4" : "flex gap-3"}
+                  key={item.id}
+                >
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
                     <Image
                       alt={item.name}
@@ -549,33 +556,39 @@ export function CheckoutPageClient() {
                     <p className="line-clamp-2 text-sm font-medium">
                       {item.name}
                     </p>
-                    {item.customFields &&
+                    {isSubItem ? (
+                      <p className="text-xs text-muted-foreground">
+                        Part of: {item.packageName}
+                      </p>
+                    ) : (
+                      item.customFields &&
                       Object.keys(item.customFields).length > 0 && (
                         <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                           {Object.entries(item.customFields).map(
                             ([key, value]) =>
                               value ? (
-                                <span
-                                  key={key}
-                                  className="text-xs text-primary"
-                                >
+                                <span key={key} className="text-xs text-primary">
                                   {key}: {value}
                                 </span>
                               ) : null,
                           )}
                         </div>
-                      )}
+                      )
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">
                         Qty: {item.quantity}
                       </span>
-                      <span className="text-sm font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </span>
+                      {!isSubItem && (
+                        <span className="text-sm font-medium">
+                          ${(item.price * item.quantity).toFixed(2)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
               <Separator />
 

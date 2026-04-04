@@ -2,7 +2,7 @@ import { Mail } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-import { getClubBySlug, getClubProducts, getClubProductTags } from "~/lib/api/clubs";
+import { getClubBySlug, getClubPackages, getClubProducts, getClubProductTags } from "~/lib/api/clubs";
 import { ClubProductsSection } from "~/ui/components/club-products-section";
 
 interface ClubPageProps {
@@ -21,18 +21,27 @@ export default async function ClubPage({ params }: ClubPageProps) {
 
   const id = club.id;
 
-  // Fetch initial products
-  const productsData = await getClubProducts(id, {
-    page: 1,
-    limit: 50,
-    isActive: true,
-    sortBy: "price" as any,
-    sortOrder: "desc" as any,
+  // Fetch initial products and packages in parallel
+  const [productsData, packages, productTags] = await Promise.all([
+    getClubProducts(id, {
+      page: 1,
+      limit: 50,
+      isActive: true,
+      sortBy: "price" as any,
+      sortOrder: "desc" as any,
+    }),
+    getClubPackages(id),
+    getClubProductTags(id),
+  ]);
+
+  // Merge product tags with package tags — deduplicate case-insensitively
+  const seen = new Set<string>();
+  const tags = [...productTags, ...packages.flatMap((p) => p.tags)].filter((tag) => {
+    const lower = tag.toLowerCase();
+    if (seen.has(lower)) return false;
+    seen.add(lower);
+    return true;
   });
-
-
-  // Fetch available tags for this club
-  const tags = await getClubProductTags(id);
 
   const clubLogo = club.iconBrandShopUrl || club.logoUrl || club.imageUrl;
   const clubCover = club.imageUrl;
@@ -102,9 +111,11 @@ export default async function ClubPage({ params }: ClubPageProps) {
       <ClubProductsSection
         tags={tags}
         clubId={id}
+        clubSlug={slug}
         clubName={club.name}
         initialProducts={productsData.data}
         initialTotal={productsData.meta.total}
+        initialPackages={packages}
       />
     </main>
   );

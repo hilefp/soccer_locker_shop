@@ -484,6 +484,70 @@ export interface Order {
   statusHistory?: OrderStatusHistory[];
 }
 
+// Club Package Types
+export interface PackageItemVariant extends ProductVariant {
+  availability: {
+    status: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
+    totalAvailable: number;
+  };
+}
+
+export interface PackageGroupItem {
+  clubProductId: string;
+  name: string;
+  imageUrls: string[];
+  customFields: CustomFieldDefinition[] | null;
+  variants: PackageItemVariant[];
+}
+
+export interface ClubPackageItem {
+  id: string;
+  quantity: number;
+  sortOrder: number;
+  clubProductId: string;
+  name: string;
+  imageUrls: string[];
+  customFields: CustomFieldDefinition[] | null;
+  tags: string[];
+  isGrouped: boolean;
+  product: {
+    id: string;
+    name: string;
+    slug: string;
+    category: ProductCategory;
+    brand: ProductBrand;
+  };
+  variants: PackageItemVariant[];
+  groupItems?: PackageGroupItem[];
+}
+
+export interface ClubPackageDetail {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrls: string[];
+  tags: string[];
+  items: ClubPackageItem[];
+}
+
+export interface ClubPackageSummary {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  imageUrls: string[];
+  tags: string[];
+  itemCount: number;
+  items: {
+    id: string;
+    quantity: number;
+    clubProductId: string;
+    name: string;
+    imageUrls: string[];
+  }[];
+}
+
 export interface OrderTimelineStep {
   status: string;
   label: string;
