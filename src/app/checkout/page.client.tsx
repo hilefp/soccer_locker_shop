@@ -143,26 +143,41 @@ export function CheckoutPageClient() {
     let cancelled = false;
 
     async function syncCart() {
-        console.log("🔑 token in localStorage:", localStorage.getItem("auth-token"));
-
       setCartSyncing(true);
       try {
         await apiDelete("/api/shop/cart");
 
-        for (const item of currentItems) {
+        // Separate packages from standalone items
+        const packageHeaders = currentItems.filter((i) => i.isPackageHeader);
+        const subItems = currentItems.filter((i) => !!i.packageId && !i.isPackageHeader);
+        const standaloneItems = currentItems.filter((i) => !i.isPackageHeader && !i.packageId);
+
+        // POST one package call per package header
+        for (const header of packageHeaders) {
           if (cancelled) return;
-          // Skip virtual package header rows — they have no real variantId
-          if (item.isPackageHeader) continue;
-          const productVariantId = item.variantId || item.id;
+          const pkgSubItems = subItems.filter((i) => i.packageId === header.id);
+          await apiPost("/api/shop/cart/package", {
+            clubId: header.clubId,
+            clubPackageId: header.id,
+            items: pkgSubItems.map((i) => ({
+              productVariantId: i.variantId ?? i.id,
+              quantity: i.quantity,
+              ...(i.customFields && Object.keys(i.customFields).length > 0
+                ? { customFields: i.customFields }
+                : {}),
+            })),
+          });
+        }
+
+        // POST individual items for non-package products
+        for (const item of standaloneItems) {
+          if (cancelled) return;
           await apiPost("/api/shop/cart/items", {
-            productVariantId,
+            productVariantId: item.variantId ?? item.id,
             quantity: item.quantity,
             customFields: item.customFields,
             clubProductId: item.clubProductId,
           });
-        }
-
-        if (!cancelled) {
         }
       } catch (err) {
         if (!cancelled) {
