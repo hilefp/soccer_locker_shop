@@ -457,6 +457,21 @@ export function PackageClient({ pkg, clubId, clubSlug }: PackageClientProps) {
           </div>
         )}
 
+        {/* Stock Availability */}
+        {selectedVariant?.availability && (
+          <p
+            className={cn("text-xs font-medium mt-1", {
+              "text-green-600": selectedVariant.availability.status === "IN_STOCK",
+              "text-amber-600": selectedVariant.availability.status === "LOW_STOCK",
+              "text-destructive": selectedVariant.availability.status === "OUT_OF_STOCK",
+            })}
+          >
+            {selectedVariant.availability.status === "IN_STOCK" && "In Stock"}
+            {selectedVariant.availability.status === "LOW_STOCK" && "Low Stock — Only a few left"}
+            {selectedVariant.availability.status === "OUT_OF_STOCK" && "Backordered"}
+          </p>
+        )}
+
         {/* Custom Fields */}
         {currentCustomFields.length > 0 && (
           <div className="mt-6 space-y-4">

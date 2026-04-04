@@ -436,6 +436,11 @@ export interface OrderItem {
   unitPrice: string;
   totalPrice: string;
   createdAt: string;
+  // Package grouping (present when item belongs to a package)
+  packageInstanceId?: string;
+  clubPackageId?: string;
+  packageName?: string;
+  packagePrice?: string;
 }
 
 export interface OrderStatusHistory {

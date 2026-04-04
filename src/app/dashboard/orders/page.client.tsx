@@ -225,47 +225,118 @@ export function OrdersPageClient() {
               </div>
 
               <div className="space-y-3">
-                {selectedOrder.items?.map((item: OrderItem) => {
-                  const sizeValue = item.attributes
-                    ? Object.values(item.attributes)[0]
-                    : null;
-                  return (
-                    <div
-                      className="rounded-md border p-3 space-y-1"
-                      key={item.id}
-                    >
-                      <p className="font-medium text-sm leading-tight">
-                        {item.clubProduct?.name || item.name}
-                      </p>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>SKU: {item.sku}</span>
-                        {sizeValue && <span>{sizeValue}</span>}
-                      </div>
-                      {item.customFields &&
-                        typeof item.customFields === "object" &&
-                        Object.keys(item.customFields).length > 0 && (
-                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-primary">
-                            {Object.entries(item.customFields).map(
-                              ([key, value]) =>
-                                value ? (
-                                  <span key={key}>
-                                    {key}: {value}
-                                  </span>
-                                ) : null,
-                            )}
-                          </div>
-                        )}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
+                {(() => {
+                  const items = selectedOrder.items ?? [];
+                  const standaloneItems = items.filter((i) => !i.packageInstanceId);
+
+                  // Group package items by packageInstanceId
+                  const packageGroups = new Map<string, OrderItem[]>();
+                  for (const item of items) {
+                    if (!item.packageInstanceId) continue;
+                    const group = packageGroups.get(item.packageInstanceId) ?? [];
+                    group.push(item);
+                    packageGroups.set(item.packageInstanceId, group);
+                  }
+
+                  const renderSubItem = (item: OrderItem) => {
+                    const sizeValue = item.attributes
+                      ? Object.values(item.attributes)[0]
+                      : null;
+                    return (
+                      <div key={item.id} className="pl-3 border-l-2 border-muted space-y-0.5">
+                        <p className="text-sm leading-tight">
+                          {item.clubProduct?.name || item.name}
+                        </p>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>SKU: {item.sku}</span>
+                          {sizeValue && <span>{sizeValue}</span>}
+                        </div>
+                        {item.customFields &&
+                          typeof item.customFields === "object" &&
+                          Object.keys(item.customFields).length > 0 && (
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-primary">
+                              {Object.entries(item.customFields).map(
+                                ([key, value]) =>
+                                  value ? (
+                                    <span key={key}>
+                                      {key}: {value}
+                                    </span>
+                                  ) : null,
+                              )}
+                            </div>
+                          )}
+                        <span className="text-xs text-muted-foreground">
                           Qty: {item.quantity}
                         </span>
-                        <span className="font-medium">
-                          {formatCurrency(item.totalPrice)}
-                        </span>
                       </div>
-                    </div>
+                    );
+                  };
+
+                  const renderStandaloneItem = (item: OrderItem) => {
+                    const sizeValue = item.attributes
+                      ? Object.values(item.attributes)[0]
+                      : null;
+                    return (
+                      <div
+                        className="rounded-md border p-3 space-y-1"
+                        key={item.id}
+                      >
+                        <p className="font-medium text-sm leading-tight">
+                          {item.clubProduct?.name || item.name}
+                        </p>
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>SKU: {item.sku}</span>
+                          {sizeValue && <span>{sizeValue}</span>}
+                        </div>
+                        {item.customFields &&
+                          typeof item.customFields === "object" &&
+                          Object.keys(item.customFields).length > 0 && (
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-primary">
+                              {Object.entries(item.customFields).map(
+                                ([key, value]) =>
+                                  value ? (
+                                    <span key={key}>
+                                      {key}: {value}
+                                    </span>
+                                  ) : null,
+                              )}
+                            </div>
+                          )}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Qty: {item.quantity}
+                          </span>
+                          <span className="font-medium">
+                            {formatCurrency(item.totalPrice)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  return (
+                    <>
+                      {Array.from(packageGroups.entries()).map(([instanceId, groupItems]) => {
+                        const first = groupItems[0]!;
+                        const packagePrice = first.packagePrice ?? first.totalPrice;
+                        return (
+                          <div key={instanceId} className="rounded-md border p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="font-semibold text-sm">{first.packageName || "Package"}</p>
+                              <span className="font-medium text-sm">
+                                {formatCurrency(packagePrice)}
+                              </span>
+                            </div>
+                            <div className="space-y-2 pt-1">
+                              {groupItems.map(renderSubItem)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {standaloneItems.map(renderStandaloneItem)}
+                    </>
                   );
-                })}
+                })()}
               </div>
 
               <div className="space-y-1 border-t pt-3 text-sm">
