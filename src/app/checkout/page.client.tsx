@@ -296,10 +296,11 @@ export function CheckoutPageClient() {
     <div className="container mx-auto max-w-7xl px-4 py-8 md:px-6">
       <h1 className="mb-8 text-3xl font-bold">Checkout</h1>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 lg:gap-8">
         {/* Left column — Form */}
         <div className="lg:col-span-2">
           <form
+            id="checkout-form"
             className="space-y-6"
             onSubmit={handleSubmit(onSubmit)}
           >
@@ -523,9 +524,9 @@ export function CheckoutPageClient() {
               </CardContent>
             </Card>
 
-            {/* Submit */}
+            {/* Submit — desktop only */}
             <Button
-              className="w-full"
+              className="hidden w-full lg:flex"
               disabled={isSubmitting || cartSyncing}
               size="lg"
               type="submit"
@@ -728,6 +729,27 @@ export function CheckoutPageClient() {
               )}
             </CardContent>
           </Card>
+
+          {/* Submit — mobile only */}
+          <Button
+            className="mt-4 w-full lg:hidden"
+            disabled={isSubmitting || cartSyncing}
+            form="checkout-form"
+            size="lg"
+            type="submit"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Redirecting to payment...
+              </>
+            ) : (
+              <>
+                <Package className="mr-2 h-4 w-4" />
+                Proceed to Payment — ${total.toFixed(2)}
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>
