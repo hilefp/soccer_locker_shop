@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Package } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { apiGet } from "~/lib/api/client";
@@ -62,6 +62,8 @@ function formatCurrency(amount: string, currency = "USD") {
   }).format(Number(amount));
 }
 
+const PAGE_SIZE = 10;
+
 export function OrdersPageClient() {
   const { loading: authLoading } = useCurrentUserOrRedirect();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -69,6 +71,7 @@ export function OrdersPageClient() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (authLoading) return;
@@ -156,46 +159,82 @@ export function OrdersPageClient() {
                 No orders found.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="w-[60px]" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">
-                        {order.orderNumber}
-                      </TableCell>
-                      <TableCell>{formatDate(order.createdAt)}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(order.status)}>
-                          {order.status.replace(/_/g, " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(order.total, order.currency)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          onClick={() => handleViewOrder(order.orderNumber)}
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              </div>
+              (() => {
+                const totalPages = Math.ceil(orders.length / PAGE_SIZE);
+                const paginated = orders.slice(
+                  (currentPage - 1) * PAGE_SIZE,
+                  currentPage * PAGE_SIZE
+                );
+                return (
+                  <div className="space-y-4">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Order #</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Total</TableHead>
+                            <TableHead className="w-15" />
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginated.map((order) => (
+                            <TableRow key={order.id}>
+                              <TableCell className="font-medium">
+                                {order.orderNumber}
+                              </TableCell>
+                              <TableCell>{formatDate(order.createdAt)}</TableCell>
+                              <TableCell>
+                                <Badge variant={getStatusVariant(order.status)}>
+                                  {order.status.replace(/_/g, " ")}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(order.total, order.currency)}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  onClick={() => handleViewOrder(order.orderNumber)}
+                                  size="icon"
+                                  variant="ghost"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <div className="flex gap-1">
+                          <Button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage((p) => p - 1)}
+                            size="icon"
+                            variant="outline"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage((p) => p + 1)}
+                            size="icon"
+                            variant="outline"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
             )}
           </CardContent>
         </Card>

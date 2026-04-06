@@ -159,9 +159,10 @@ export function CheckoutPageClient() {
           await apiPost("/api/shop/cart/package", {
             clubId: header.clubId,
             clubPackageId: header.id,
+            quantity: header.quantity,
             items: pkgSubItems.map((i) => ({
               productVariantId: i.variantId ?? i.id,
-              quantity: i.quantity,
+              quantity: i.quantity / header.quantity,
               ...(i.customFields && Object.keys(i.customFields).length > 0
                 ? { customFields: i.customFields }
                 : {}),
