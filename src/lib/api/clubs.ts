@@ -1,5 +1,5 @@
 import { apiGetServer } from "~/lib/api/client-server";
-import type { Club, ClubProductDetail, ClubProductFilters, ClubProductsResponse } from "~/lib/api/types";
+import type { Club, ClubPackageDetail, ClubPackageSummary, ClubProductDetail, ClubProductFilters, ClubProductsResponse } from "~/lib/api/types";
 import { slugify } from "~/lib/slugify";
 
 /**
@@ -95,6 +95,35 @@ export async function getClubProductTags(clubId: string): Promise<string[]> {
   } catch (error) {
     console.error(`Error fetching tags for club ${clubId}:`, error);
     return [];
+  }
+}
+
+/**
+ * Fetch all active packages for a club (server-side, shop view)
+ */
+export async function getClubPackages(clubId: string): Promise<ClubPackageSummary[]> {
+  try {
+    return await apiGetServer<ClubPackageSummary[]>(`/api/shop/clubs/${clubId}/packages`);
+  } catch (error) {
+    console.error(`Error fetching packages for club ${clubId}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Fetch a single package with full product/variant detail (server-side, shop view)
+ */
+export async function getClubPackageDetail(
+  clubId: string,
+  packageId: string,
+): Promise<ClubPackageDetail | null> {
+  try {
+    return await apiGetServer<ClubPackageDetail>(
+      `/api/shop/clubs/${clubId}/packages/${packageId}`,
+    );
+  } catch (error) {
+    console.error(`Error fetching package ${packageId} for club ${clubId}:`, error);
+    return null;
   }
 }
 

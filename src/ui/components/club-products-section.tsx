@@ -4,30 +4,42 @@ import { useEffect, useState } from "react";
 
 import { ProductModal } from "~/ui/components/product-modal";
 import type {
+  ClubPackageSummary,
   ClubProduct,
   ClubProductDetail,
   ClubProductFilters,
 } from "~/lib/api/types";
+import { ClubPackageCard } from "~/ui/components/club-package-card";
 import { ClubProductCard } from "~/ui/components/club-product-card";
 
 interface ClubProductsSectionProps {
   clubId: string;
+  clubSlug: string;
   clubName: string;
   initialProducts: ClubProduct[];
   initialTotal: number;
+  initialPackages: ClubPackageSummary[];
   tags: string[];
 }
 
 export function ClubProductsSection({
   clubId,
+  clubSlug,
   clubName,
   initialProducts,
   initialTotal,
+  initialPackages,
   tags,
 }: ClubProductsSectionProps) {
   const [products, setProducts] = useState<ClubProduct[]>(initialProducts);
   const [selectedTag, setSelectedTag] = useState<string | null>(tags[0] ?? null);
   const [isLoading, setIsLoading] = useState(false);
+
+  const filteredPackages = selectedTag
+    ? initialPackages.filter((p) =>
+        p.tags.some((t) => t.toLowerCase() === selectedTag.toLowerCase()),
+      )
+    : initialPackages;
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
@@ -169,8 +181,11 @@ export function ClubProductsSection({
                 </p>
               </div>
             </div>
-          ) : displayedProducts.length > 0 ? (
+          ) : displayedProducts.length > 0 || filteredPackages.length > 0 ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {filteredPackages.map((pkg) => (
+                <ClubPackageCard key={pkg.id} pkg={pkg} clubSlug={clubSlug} />
+              ))}
               {displayedProducts.map((product) => (
                 <ClubProductCard
                   key={product.id}
@@ -192,10 +207,10 @@ export function ClubProductsSection({
             </div>
           )}
 
-          {/* Product Count */}
-          {displayedProducts.length > 0 && (
+          {/* Item Count */}
+          {(displayedProducts.length > 0 || filteredPackages.length > 0) && (
             <div className="mt-8 text-center text-sm text-muted-foreground">
-              Showing {displayedProducts.length} product{displayedProducts.length !== 1 ? "s" : ""}
+              Showing {displayedProducts.length + filteredPackages.length} item{displayedProducts.length + filteredPackages.length !== 1 ? "s" : ""}
             </div>
           )}
         </div>

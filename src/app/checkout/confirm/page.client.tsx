@@ -149,12 +149,12 @@ export function ConfirmPageClient() {
                     #{orderData.orderNumber}
                   </span>
                 </div>
-                <div className="flex items-center justify-between text-sm">
+                {/* <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Order ID</span>
                   <span className="font-mono text-xs">
                     {orderData.orderId}
                   </span>
-                </div>
+                </div> */}
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Status</span>
                   <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">

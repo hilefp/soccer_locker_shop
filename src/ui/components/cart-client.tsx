@@ -158,14 +158,16 @@ export function CartClient({ className }: CartProps) {
               </motion.div>
             ) : (
               <div className="space-y-4 py-4">
-                {cartItems.map((item) => (
+                {cartItems.map((item) => {
+                  const isSubItem = !!item.packageId && !item.isPackageHeader;
+
+                  return (
                   <motion.div
                     animate={{ opacity: 1, y: 0 }}
-                    className={`
-                      group relative flex rounded-lg border bg-card p-2
-                      shadow-sm transition-colors
-                      hover:bg-accent/50
-                    `}
+                    className={cn(
+                      "group relative flex rounded-lg border bg-card p-2 shadow-sm transition-colors hover:bg-accent/50",
+                      isSubItem && "ml-4 border-dashed opacity-90",
+                    )}
                     exit={{ opacity: 0, y: -10 }}
                     initial={{ opacity: 0, y: 10 }}
                     key={item.id}
@@ -183,40 +185,38 @@ export function CartClient({ className }: CartProps) {
                     <div className="ml-4 flex flex-1 flex-col justify-between">
                       <div>
                         <div className="flex items-start justify-between">
-                          <p
-                            className={`
-                              line-clamp-2 text-sm font-medium
-                              group-hover:text-primary
-                            `}
-                          >
+                          <p className="line-clamp-2 text-sm font-medium group-hover:text-primary">
                             {item.name}
                           </p>
-                          <button
-                            className={`
-                              -mt-1 -mr-1 ml-2 rounded-full p-1
-                              text-muted-foreground transition-colors
-                              hover:bg-muted hover:text-destructive
-                            `}
-                            onClick={() => handleRemoveItem(item.id)}
-                            type="button"
-                          >
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Remove item</span>
-                          </button>
+                          {/* Only package headers and standalone items get a remove button */}
+                          {!isSubItem && (
+                            <button
+                              className="-mt-1 -mr-1 ml-2 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                              onClick={() => handleRemoveItem(item.id)}
+                              type="button"
+                            >
+                              <X className="h-4 w-4" />
+                              <span className="sr-only">Remove item</span>
+                            </button>
+                          )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {item.category}
-                        </p>
+
+                        {/* Sub-item "Part of" label */}
+                        {isSubItem ? (
+                          <p className="text-xs text-muted-foreground">
+                            <span className="font-medium">Part of:</span> {item.packageName}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">{item.category}</p>
+                        )}
+
                         {item.customFields &&
                           Object.keys(item.customFields).length > 0 && (
                             <div className="mt-0.5 flex flex-wrap gap-x-2">
                               {Object.entries(item.customFields).map(
                                 ([key, value]) =>
                                   value ? (
-                                    <span
-                                      key={key}
-                                      className="text-[10px] text-primary"
-                                    >
+                                    <span key={key} className="text-[10px] text-primary">
                                       {key}: {value}
                                     </span>
                                   ) : null,
@@ -224,55 +224,49 @@ export function CartClient({ className }: CartProps) {
                             </div>
                           )}
                       </div>
+
                       <div className="mt-2 flex items-center justify-between">
-                        <div className="flex items-center rounded-md border">
-                          <button
-                            className={`
-                              flex h-7 w-7 items-center justify-center
-                              rounded-l-md border-r text-muted-foreground
-                              transition-colors
-                              hover:bg-muted hover:text-foreground
-                            `}
-                            disabled={item.quantity <= 1}
-                            onClick={() =>
-                              handleUpdateQuantity(item.id, item.quantity - 1)
-                            }
-                            type="button"
-                          >
-                            <Minus className="h-3 w-3" />
-                            <span className="sr-only">Decrease quantity</span>
-                          </button>
-                          <span
-                            className={`
-                              flex h-7 w-7 items-center justify-center text-xs
-                              font-medium
-                            `}
-                          >
-                            {item.quantity}
+                        {/* Sub-items: just show qty, no controls */}
+                        {isSubItem ? (
+                          <span className="text-xs text-muted-foreground">
+                            Qty: {item.quantity}
                           </span>
-                          <button
-                            className={`
-                              flex h-7 w-7 items-center justify-center
-                              rounded-r-md border-l text-muted-foreground
-                              transition-colors
-                              hover:bg-muted hover:text-foreground
-                            `}
-                            onClick={() =>
-                              handleUpdateQuantity(item.id, item.quantity + 1)
-                            }
-                            type="button"
-                          >
-                            <Plus className="h-3 w-3" />
-                            <span className="sr-only">Increase quantity</span>
-                          </button>
-                        </div>
-                        <div className="text-sm font-medium">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </div>
+                        ) : (
+                          <div className="flex items-center rounded-md border">
+                            <button
+                              className="flex h-7 w-7 items-center justify-center rounded-l-md border-r text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              disabled={item.quantity <= 1}
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                              type="button"
+                            >
+                              <Minus className="h-3 w-3" />
+                              <span className="sr-only">Decrease quantity</span>
+                            </button>
+                            <span className="flex h-7 w-7 items-center justify-center text-xs font-medium">
+                              {item.quantity}
+                            </span>
+                            <button
+                              className="flex h-7 w-7 items-center justify-center rounded-r-md border-l text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                              type="button"
+                            >
+                              <Plus className="h-3 w-3" />
+                              <span className="sr-only">Increase quantity</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Sub-items show no price; header shows full price */}
+                        {!isSubItem && (
+                          <div className="text-sm font-medium">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </motion.div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </AnimatePresence>

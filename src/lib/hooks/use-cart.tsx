@@ -89,28 +89,45 @@ export function CartProvider({ children }: React.PropsWithChildren) {
   );
 
   const removeItem = React.useCallback((id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+    setItems((prev) => {
+      const target = prev.find((i) => i.id === id);
+      // If removing a package header, also remove all its sub-items
+      if (target?.isPackageHeader) {
+        return prev.filter((i) => i.id !== id && i.packageId !== id);
+      }
+      return prev.filter((i) => i.id !== id);
+    });
   }, []);
 
   const updateQuantity = React.useCallback((id: string, qty: number) => {
-    setItems((prev) =>
-      prev.flatMap((i) => {
-        if (i.id !== id) return i;
-        if (qty <= 0) return []; // treat zero/negative as remove
-        if (qty === i.quantity) return i;
-        return { ...i, quantity: qty };
-      }),
-    );
+    setItems((prev) => {
+      const target = prev.find((i) => i.id === id);
+      return prev.flatMap((i) => {
+        if (i.id === id) {
+          if (qty <= 0) return [];
+          if (qty === i.quantity) return [i];
+          return [{ ...i, quantity: qty }];
+        }
+        // If this is a sub-item of the package header being updated, sync its qty
+        if (target?.isPackageHeader && i.packageId === id) {
+          if (qty <= 0) return [];
+          return [{ ...i, quantity: qty }];
+        }
+        return [i];
+      });
+    });
   }, []);
 
   const clearCart = React.useCallback(() => setItems([]), []);
 
   /* --------------------------- Derived data ----------------------------- */
+  // Exclude virtual package header rows from the physical item count
   const itemCount = React.useMemo(
-    () => items.reduce((t, i) => t + i.quantity, 0),
+    () => items.filter((i) => !i.isPackageHeader).reduce((t, i) => t + i.quantity, 0),
     [items],
   );
 
+  // Sub-items have price 0; only the package header carries the price
   const subtotal = React.useMemo(
     () => items.reduce((t, i) => t + i.price * i.quantity, 0),
     [items],

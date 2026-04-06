@@ -1,6 +1,6 @@
 "use client";
 
-import { Eye, Package } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, Package } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 import { apiGet } from "~/lib/api/client";
@@ -62,6 +62,8 @@ function formatCurrency(amount: string, currency = "USD") {
   }).format(Number(amount));
 }
 
+const PAGE_SIZE = 10;
+
 export function OrdersPageClient() {
   const { loading: authLoading } = useCurrentUserOrRedirect();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -69,6 +71,7 @@ export function OrdersPageClient() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (authLoading) return;
@@ -156,46 +159,82 @@ export function OrdersPageClient() {
                 No orders found.
               </div>
             ) : (
-              <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order #</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="w-[60px]" />
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">
-                        {order.orderNumber}
-                      </TableCell>
-                      <TableCell>{formatDate(order.createdAt)}</TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusVariant(order.status)}>
-                          {order.status.replace(/_/g, " ")}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(order.total, order.currency)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          onClick={() => handleViewOrder(order.orderNumber)}
-                          size="icon"
-                          variant="ghost"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              </div>
+              (() => {
+                const totalPages = Math.ceil(orders.length / PAGE_SIZE);
+                const paginated = orders.slice(
+                  (currentPage - 1) * PAGE_SIZE,
+                  currentPage * PAGE_SIZE
+                );
+                return (
+                  <div className="space-y-4">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Order #</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Total</TableHead>
+                            <TableHead className="w-15" />
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paginated.map((order) => (
+                            <TableRow key={order.id}>
+                              <TableCell className="font-medium">
+                                {order.orderNumber}
+                              </TableCell>
+                              <TableCell>{formatDate(order.createdAt)}</TableCell>
+                              <TableCell>
+                                <Badge variant={getStatusVariant(order.status)}>
+                                  {order.status.replace(/_/g, " ")}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {formatCurrency(order.total, order.currency)}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  onClick={() => handleViewOrder(order.orderNumber)}
+                                  size="icon"
+                                  variant="ghost"
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between text-sm text-muted-foreground">
+                        <span>
+                          Page {currentPage} of {totalPages}
+                        </span>
+                        <div className="flex gap-1">
+                          <Button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage((p) => p - 1)}
+                            size="icon"
+                            variant="outline"
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            disabled={currentPage === totalPages}
+                            onClick={() => setCurrentPage((p) => p + 1)}
+                            size="icon"
+                            variant="outline"
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
             )}
           </CardContent>
         </Card>
@@ -225,47 +264,118 @@ export function OrdersPageClient() {
               </div>
 
               <div className="space-y-3">
-                {selectedOrder.items?.map((item: OrderItem) => {
-                  const sizeValue = item.attributes
-                    ? Object.values(item.attributes)[0]
-                    : null;
-                  return (
-                    <div
-                      className="rounded-md border p-3 space-y-1"
-                      key={item.id}
-                    >
-                      <p className="font-medium text-sm leading-tight">
-                        {item.clubProduct?.name || item.name}
-                      </p>
-                      <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span>SKU: {item.sku}</span>
-                        {sizeValue && <span>{sizeValue}</span>}
-                      </div>
-                      {item.customFields &&
-                        typeof item.customFields === "object" &&
-                        Object.keys(item.customFields).length > 0 && (
-                          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-primary">
-                            {Object.entries(item.customFields).map(
-                              ([key, value]) =>
-                                value ? (
-                                  <span key={key}>
-                                    {key}: {value}
-                                  </span>
-                                ) : null,
-                            )}
-                          </div>
-                        )}
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
+                {(() => {
+                  const items = selectedOrder.items ?? [];
+                  const standaloneItems = items.filter((i) => !i.packageInstanceId);
+
+                  // Group package items by packageInstanceId
+                  const packageGroups = new Map<string, OrderItem[]>();
+                  for (const item of items) {
+                    if (!item.packageInstanceId) continue;
+                    const group = packageGroups.get(item.packageInstanceId) ?? [];
+                    group.push(item);
+                    packageGroups.set(item.packageInstanceId, group);
+                  }
+
+                  const renderSubItem = (item: OrderItem) => {
+                    const sizeValue = item.attributes
+                      ? Object.values(item.attributes)[0]
+                      : null;
+                    return (
+                      <div key={item.id} className="pl-3 border-l-2 border-muted space-y-0.5">
+                        <p className="text-sm leading-tight">
+                          {item.clubProduct?.name || item.name}
+                        </p>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>SKU: {item.sku}</span>
+                          {sizeValue && <span>{sizeValue}</span>}
+                        </div>
+                        {item.customFields &&
+                          typeof item.customFields === "object" &&
+                          Object.keys(item.customFields).length > 0 && (
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-primary">
+                              {Object.entries(item.customFields).map(
+                                ([key, value]) =>
+                                  value ? (
+                                    <span key={key}>
+                                      {key}: {value}
+                                    </span>
+                                  ) : null,
+                              )}
+                            </div>
+                          )}
+                        <span className="text-xs text-muted-foreground">
                           Qty: {item.quantity}
                         </span>
-                        <span className="font-medium">
-                          {formatCurrency(item.totalPrice)}
-                        </span>
                       </div>
-                    </div>
+                    );
+                  };
+
+                  const renderStandaloneItem = (item: OrderItem) => {
+                    const sizeValue = item.attributes
+                      ? Object.values(item.attributes)[0]
+                      : null;
+                    return (
+                      <div
+                        className="rounded-md border p-3 space-y-1"
+                        key={item.id}
+                      >
+                        <p className="font-medium text-sm leading-tight">
+                          {item.clubProduct?.name || item.name}
+                        </p>
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <span>SKU: {item.sku}</span>
+                          {sizeValue && <span>{sizeValue}</span>}
+                        </div>
+                        {item.customFields &&
+                          typeof item.customFields === "object" &&
+                          Object.keys(item.customFields).length > 0 && (
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-primary">
+                              {Object.entries(item.customFields).map(
+                                ([key, value]) =>
+                                  value ? (
+                                    <span key={key}>
+                                      {key}: {value}
+                                    </span>
+                                  ) : null,
+                              )}
+                            </div>
+                          )}
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            Qty: {item.quantity}
+                          </span>
+                          <span className="font-medium">
+                            {formatCurrency(item.totalPrice)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  };
+
+                  return (
+                    <>
+                      {Array.from(packageGroups.entries()).map(([instanceId, groupItems]) => {
+                        const first = groupItems[0]!;
+                        const packagePrice = first.packagePrice ?? first.totalPrice;
+                        return (
+                          <div key={instanceId} className="rounded-md border p-3 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <p className="font-semibold text-sm">{first.packageName || "Package"}</p>
+                              <span className="font-medium text-sm">
+                                {formatCurrency(packagePrice)}
+                              </span>
+                            </div>
+                            <div className="space-y-2 pt-1">
+                              {groupItems.map(renderSubItem)}
+                            </div>
+                          </div>
+                        );
+                      })}
+                      {standaloneItems.map(renderStandaloneItem)}
+                    </>
                   );
-                })}
+                })()}
               </div>
 
               <div className="space-y-1 border-t pt-3 text-sm">

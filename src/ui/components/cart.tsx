@@ -9,7 +9,10 @@ export interface CartItem {
   customFields?: Record<string, any>;
   id: string;
   image: string;
+  isPackageHeader?: boolean; // Virtual row grouping package sub-items
   name: string;
+  packageId?: string;        // Links sub-items to their package header
+  packageName?: string;      // Display name of the parent package
   price: number;
   quantity: number;
   variantId?: string;
