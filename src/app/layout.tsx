@@ -13,6 +13,7 @@ import "~/css/globals.css";
 import { Footer } from "~/ui/components/footer";
 import { Header } from "~/ui/components/header/header";
 import { ThemeProvider } from "~/ui/components/theme-provider";
+import { PlatformTransitionModal } from "~/ui/components/platform-transition-modal";
 import { Toaster } from "~/ui/primitives/sonner";
 
 const geistSans = Geist({
@@ -115,6 +116,7 @@ export default function RootLayout({
               <Header showAuth={true} />
               <main className={`flex min-h-screen flex-col`}>{children}</main>
               <Footer />
+              <PlatformTransitionModal />
               <Toaster />
             </CartProvider>
           </AuthProvider>
