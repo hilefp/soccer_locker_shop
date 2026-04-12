@@ -108,10 +108,11 @@ export function CartProvider({ children }: React.PropsWithChildren) {
           if (qty === i.quantity) return [i];
           return [{ ...i, quantity: qty }];
         }
-        // If this is a sub-item of the package header being updated, sync its qty
+        // If this is a sub-item of the package header being updated, scale its qty
         if (target?.isPackageHeader && i.packageId === id) {
           if (qty <= 0) return [];
-          return [{ ...i, quantity: qty }];
+          const scaledQty = Math.round(i.quantity * (qty / target.quantity));
+          return [{ ...i, quantity: scaledQty }];
         }
         return [i];
       });
