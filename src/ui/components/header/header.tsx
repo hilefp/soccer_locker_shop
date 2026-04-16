@@ -42,6 +42,7 @@ export function Header({ showAuth = true }: HeaderProps) {
     { href: "/teams", name: "Teams" },
     { href: "/track-order", name: "Track Order" },
     { href: "/shipping-returns", name: "Shipping & Returns" },
+    { href: "/catalogs", name: "Catalogs" },
     { href: "/contact", name: "Contact" },
   ];
 
