@@ -439,6 +439,7 @@ export function PackageClient({ pkg, clubId, clubSlug }: PackageClientProps) {
               {dropdownLabel}:
             </label>
             <select
+              key={`variant-${currentItem.id}`}
               value={currentSelection.selectedVariantId ?? ""}
               onChange={(e) => handleVariantChange(e.target.value)}
               className={cn(
@@ -489,6 +490,7 @@ export function PackageClient({ pkg, clubId, clubSlug }: PackageClientProps) {
 
                   {field.type === "select" && field.options ? (
                     <select
+                      key={`cf-${currentItem.id}-${fieldKey}`}
                       id={`cf-${fieldKey}`}
                       value={currentSelection.customFieldValues[fieldKey] ?? ""}
                       onChange={(e) => handleCustomFieldChange(fieldKey, e.target.value)}

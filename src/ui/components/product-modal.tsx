@@ -344,6 +344,7 @@ export function ProductModal({
                     Size
                   </label>
                   <select
+                    key={`size-${product.id}`}
                     id="size-select"
                     value={selectedVariant?.id ?? ""}
                     onChange={(e) =>
@@ -407,6 +408,7 @@ export function ProductModal({
                       </label>
                       {field.type === "select" && field.options ? (
                         <select
+                          key={`cf-${product.id}-${fieldKey}`}
                           id={`cf-${fieldKey}`}
                           value={customFieldValues[fieldKey] ?? ""}
                           onChange={(e) =>

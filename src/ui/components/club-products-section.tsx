@@ -139,7 +139,7 @@ export function ClubProductsSection({
   return (
     <>
       {/* Tag Navigation */}
-      <section className="sticky top-20 z-30 border-b border-border/50 bg-background/95 backdrop-blur-md">
+      <section className="border-b border-border/50 bg-background">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 gap-3 py-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {tagGroups.map((tag) => (
