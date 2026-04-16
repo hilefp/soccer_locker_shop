@@ -311,17 +311,17 @@ export function CheckoutPageClient() {
               <Card
                 className={
                   isRushOrder
-                    ? "border-primary bg-primary/5 transition-colors"
-                    : "transition-colors"
+                    ? "border-amber-500 bg-amber-100 dark:bg-amber-900/50 dark:border-amber-600 transition-colors"
+                    : "border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 transition-colors"
                 }
               >
                 <CardContent className="flex items-start gap-4 pt-6">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-600">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300">
                     <Zap className="h-5 w-5" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-base font-semibold">
+                      <h3 className="text-xl font-bold text-amber-900 dark:text-amber-100">
                         Rush my order for faster processing
                       </h3>
                       <Switch
@@ -331,14 +331,11 @@ export function CheckoutPageClient() {
                         }
                       />
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 text-sm text-amber-700/70 dark:text-amber-300/70">
                       {rushDescription}
                     </p>
-                    <p className="mt-2 text-sm font-semibold">
-                      + ${rushFeeAmount.toFixed(2)}{" "}
-                      {/* <span className="font-normal text-muted-foreground">
-                        (tax-free)
-                      </span> */}
+                    <p className="mt-2 text-sm font-semibold text-amber-800 dark:text-amber-200">
+                      + ${rushFeeAmount.toFixed(2)}
                     </p>
                   </div>
                 </CardContent>
