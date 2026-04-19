@@ -291,14 +291,16 @@ export function PackageClient({ pkg, clubId, clubSlug }: PackageClientProps) {
 
     setIsAdding(true);
 
-    // Add virtual package header (carries the full price)
+    const instanceId = `${pkg.id}-${crypto.randomUUID()}`;
+
     addItem({
-      id: pkg.id,
+      id: instanceId,
       name: pkg.name,
       price: pkg.price,
       image: pkg.imageUrls[0] ?? items[0]?.imageUrls[0] ?? "",
       category: "Package",
       clubId,
+      clubPackageId: pkg.id,
       isPackageHeader: true,
     }, 1);
 
@@ -333,7 +335,7 @@ export function PackageClient({ pkg, clubId, clubSlug }: PackageClientProps) {
 
       addItem(
         {
-          id: `${pkg.id}-${effectiveClubProductId}-${variant?.id ?? i}`,
+          id: `${instanceId}-${effectiveClubProductId}-${variant?.id ?? i}`,
           name: cartName,
           price: 0, // Price is carried by the package header
           image: item.imageUrls[0] ?? "",
@@ -342,7 +344,7 @@ export function PackageClient({ pkg, clubId, clubSlug }: PackageClientProps) {
           clubProductId: effectiveClubProductId,
           variantId: variant?.id,
           customFields: customFieldsData,
-          packageId: pkg.id,
+          packageId: instanceId,
           packageName: pkg.name,
         },
         item.quantity,
