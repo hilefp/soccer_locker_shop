@@ -5,6 +5,7 @@ import { CartClient } from "./cart-client";
 export interface CartItem {
   category: string;
   clubId?: string;
+  clubPackageId?: string;    // Real ClubPackage ID (header uses unique instanceId as id)
   clubProductId?: string;
   customFields?: Record<string, any>;
   id: string;

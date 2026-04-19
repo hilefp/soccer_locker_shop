@@ -152,13 +152,12 @@ export function CheckoutPageClient() {
         const subItems = currentItems.filter((i) => !!i.packageId && !i.isPackageHeader);
         const standaloneItems = currentItems.filter((i) => !i.isPackageHeader && !i.packageId);
 
-        // POST one package call per package header
         for (const header of packageHeaders) {
           if (cancelled) return;
           const pkgSubItems = subItems.filter((i) => i.packageId === header.id);
           await apiPost("/api/shop/cart/package", {
             clubId: header.clubId,
-            clubPackageId: header.id,
+            clubPackageId: header.clubPackageId ?? header.id,
             quantity: header.quantity,
             items: pkgSubItems.map((i) => ({
               productVariantId: i.variantId ?? i.id,
@@ -170,7 +169,6 @@ export function CheckoutPageClient() {
           });
         }
 
-        // POST individual items for non-package products
         for (const item of standaloneItems) {
           if (cancelled) return;
           await apiPost("/api/shop/cart/items", {
