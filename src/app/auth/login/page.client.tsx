@@ -21,6 +21,7 @@ export function LoginPageClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
+  const [verificationBanner, setVerificationBanner] = React.useState(false);
 
   React.useEffect(() => {
     if (searchParams.get("reason") === "session_expired") {
@@ -37,14 +38,20 @@ export function LoginPageClient() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    setVerificationBanner(false);
     try {
       await login(data.email, data.password);
       toast.success("Login successful!");
       router.push(SYSTEM_CONFIG.redirectAfterSignIn);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Something went wrong. Please try again.",
-      );
+      const error = err as Error & { errorCode?: string };
+      if (error.errorCode === "EMAIL_NOT_VERIFIED") {
+        setVerificationBanner(true);
+      } else {
+        toast.error(
+          error.message ?? "Something went wrong. Please try again.",
+        );
+      }
       console.error(err);
     }
   };
@@ -103,6 +110,17 @@ export function LoginPageClient() {
               Enter your credentials to access your account
             </p>
           </div>
+
+          {verificationBanner && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              <p className="font-semibold">Email verification required</p>
+              <p className="mt-1">
+                Your account was deactivated because your email was not verified.
+                We&apos;ve sent a new verification link to your inbox — please
+                check your email and verify to log in.
+              </p>
+            </div>
+          )}
 
           <Card className="border-none shadow-none">
             <CardContent className="pt-2">

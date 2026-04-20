@@ -6,7 +6,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { requestPasswordReset } from "~/lib/api/auth";
 import { forgotPasswordSchema } from "~/lib/validations/auth";
 import type { ForgotPasswordFormData } from "~/lib/validations/auth";
 import { Button } from "~/ui/primitives/button";
@@ -27,7 +26,15 @@ export function ForgotPasswordPageClient() {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     try {
-      await requestPasswordReset({ email: data.email });
+      const response = await fetch("/api/shop/auth/forgot-password", {
+        body: JSON.stringify({ email: data.email }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        const error = (await response.json()) as { error?: string };
+        throw new Error(error.error || "Failed to send reset instructions");
+      }
       setSuccess(true);
       toast.success("Password reset instructions sent to your email");
     } catch (err) {
