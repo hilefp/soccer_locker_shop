@@ -7,7 +7,6 @@ import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { resetPassword } from "~/lib/api/auth";
 import { resetPasswordSchema } from "~/lib/validations/auth";
 import type { ResetPasswordFormData } from "~/lib/validations/auth";
 import { Button } from "~/ui/primitives/button";
@@ -36,7 +35,15 @@ function ResetPasswordForm() {
     }
 
     try {
-      await resetPassword({ newPassword: data.password, token });
+      const response = await fetch("/api/shop/auth/reset-password", {
+        body: JSON.stringify({ newPassword: data.password, token }),
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
+      });
+      if (!response.ok) {
+        const error = (await response.json()) as { error?: string };
+        throw new Error(error.error || "Failed to reset password");
+      }
       setSuccess(true);
       toast.success("Password reset successfully!");
       setTimeout(() => {

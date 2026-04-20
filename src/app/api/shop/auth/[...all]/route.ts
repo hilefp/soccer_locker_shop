@@ -73,14 +73,29 @@ export async function POST(
           user: authResponse.user,
         });
       } catch (loginError) {
+        const err = loginError as Record<string, unknown> | null;
         const statusCode =
-          loginError && typeof loginError === "object" && "statusCode" in loginError
-            ? (loginError as { statusCode: number }).statusCode
-            : 500;
-        return NextResponse.json(
-          { error: statusCode === 401 ? "Invalid email or password" : "Login failed" },
-          { status: statusCode },
-        );
+          err && "statusCode" in err ? (err.statusCode as number) : 500;
+
+        if (statusCode === 401) {
+          // Pass through errorCode from backend when present (e.g. EMAIL_NOT_VERIFIED)
+          const backendBody = err && "data" in err
+            ? (err.data as Record<string, unknown>)
+            : null;
+          const errorCode = backendBody?.errorCode as string | undefined;
+
+          return NextResponse.json(
+            {
+              error: errorCode
+                ? (backendBody?.message as string)
+                : "Invalid email or password",
+              ...(errorCode && { errorCode }),
+            },
+            { status: 401 },
+          );
+        }
+
+        return NextResponse.json({ error: "Login failed" }, { status: statusCode });
       }
     }
 
