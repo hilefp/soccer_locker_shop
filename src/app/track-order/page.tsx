@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, Truck } from "lucide-react";
 import { Button } from "~/ui/primitives/button";
 import { Input } from "~/ui/primitives/input";
 import { Label } from "~/ui/primitives/label";
@@ -141,7 +141,7 @@ function TrackOrderContent() {
                         ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                         : orderData.status === "MISSING"
                           ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
-                          : orderData.status === "SHIPPED" || orderData.status === "IN_TRANSIT"
+                          : orderData.status === "SHIPPED" || orderData.status === "IN_TRANSIT" || orderData.status === "PARTIALLY_SHIPPED"
                             ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
                             : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
                     }
@@ -176,6 +176,33 @@ function TrackOrderContent() {
                           )}
                         </li>
                       ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Partially Shipped Notice */}
+                {orderData.status === "PARTIALLY_SHIPPED" && orderData.items && (
+                  <div className="rounded-lg border border-blue-500/50 bg-blue-50 p-4 dark:bg-blue-900/20">
+                    <div className="mb-3 flex items-center gap-2 text-blue-800 dark:text-blue-400">
+                      <Truck className="h-5 w-5" />
+                      <h3 className="font-semibold">This order has been partially shipped</h3>
+                    </div>
+                    <ul className="space-y-1">
+                      {orderData.items.map((item) => {
+                        const pending = item.quantity - item.shippedQuantity;
+                        return (
+                          <li className="flex items-center justify-between text-sm" key={item.id}>
+                            <span className="text-blue-900 dark:text-blue-300">
+                              {item.clubProduct?.name || item.name}
+                              {item.attributes && Object.keys(item.attributes).length > 0 && ` — ${Object.values(item.attributes)[0]}`}
+                            </span>
+                            <span className="text-blue-700 dark:text-blue-400">
+                              {item.shippedQuantity} of {item.quantity} shipped
+                              {pending > 0 && ` (${pending} pending)`}
+                            </span>
+                          </li>
+                        );
+                      })}
                     </ul>
                   </div>
                 )}

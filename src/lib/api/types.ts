@@ -432,6 +432,7 @@ export interface OrderItem {
   attributes: Record<string, string> | null;
   customFields: Record<string, any> | null;
   quantity: number;
+  shippedQuantity: number;
   missingQuantity: number;
   unitPrice: string;
   totalPrice: string;
@@ -482,6 +483,7 @@ export interface Order {
   printedAt: string | null;
   pickedAt: string | null;
   processedAt: string | null;
+  partiallyShippedAt: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;

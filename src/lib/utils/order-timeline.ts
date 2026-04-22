@@ -20,6 +20,10 @@ const STATUS_CONFIG: Record<string, { label: string; description: string }> = {
     label: "Processing",
     description: "Your order is being processed",
   },
+  PARTIALLY_SHIPPED: {
+    label: "Partially Shipped",
+    description: "Part of your order has been shipped",
+  },
   SHIPPING: {
     label: "Shipping",
     description: "Your order is being shipped",
@@ -45,11 +49,14 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
   const timeline: OrderTimelineStep[] = [];
 
   // Define the complete order flow (normal flow, excluding Missing/Refund)
+  // Include PARTIALLY_SHIPPED step only if the order has that status
+  const hasPartiallyShipped = order.status === "PARTIALLY_SHIPPED" || !!order.partiallyShippedAt;
   const statusFlow = [
     "NEW",
     "PRINT",
     "PICKING_UP",
     "PROCESSING",
+    ...(hasPartiallyShipped ? ["PARTIALLY_SHIPPED"] : []),
     "SHIPPING",
     "DELIVERED",
   ];
@@ -60,6 +67,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
     PRINT: order.printedAt,
     PICKING_UP: order.pickedAt,
     PROCESSING: order.processedAt,
+    PARTIALLY_SHIPPED: order.partiallyShippedAt,
     SHIPPING: order.shippedAt,
     DELIVERED: order.deliveredAt,
     MISSING: order.updatedAt,
