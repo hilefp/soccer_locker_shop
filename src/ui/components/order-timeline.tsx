@@ -2,6 +2,7 @@ import {
   Circle,
   Package,
   PackageCheck,
+  PackageOpen,
   ShoppingCart,
   Truck,
   Printer,
@@ -28,6 +29,9 @@ const STATUS_CONFIG = {
   },
   processing: {
     icon: Package,
+  },
+  partially_shipped: {
+    icon: PackageOpen,
   },
   shipping: {
     icon: Truck,
