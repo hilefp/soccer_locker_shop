@@ -14,7 +14,7 @@ export default function AboutPage() {
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             About Us
           </h1>
-        </div>
+        </div> 
 
         <div className="prose prose-neutral max-w-none dark:prose-invert">
           <section className="mb-8">
