@@ -147,7 +147,9 @@ function TrackOrderContent() {
                     }
                   `}
                 >
-                  {orderData.status?.replace(/_/g, ' ').toLowerCase() || 'Unknown'}
+                  {orderData.status === 'PICKING_UP'
+                    ? 'Preparing'
+                    : orderData.status?.replace(/_/g, ' ').toLowerCase() || 'Unknown'}
                 </span>
               </div>
             </CardHeader>
