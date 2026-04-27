@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { getClubs } from "~/lib/api/clubs";
 import { ClubsGrid } from "~/ui/components/clubs-grid";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Teams",
   description: "Browse all soccer clubs and academies. Find your team and shop official uniforms and fan gear.",

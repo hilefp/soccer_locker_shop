@@ -2,6 +2,8 @@ import { getClubs } from "~/lib/api/clubs";
 import { ClubsGrid } from "~/ui/components/clubs-grid";
 import { HeroCarousel } from "~/ui/components/hero-carousel";
 
+export const revalidate = 60;
+
 const carouselSlides = [
   {
     alt: "Soccer Ball - Trionda",
