@@ -81,7 +81,7 @@ export function CheckoutPageClient() {
         address2: "",
         city: user?.profile?.city || "",
         state: user?.profile?.state || "",
-        country: user?.profile?.country || "",
+        country: user?.profile?.country || "US",
         postalCode: user?.profile?.postalCode || "",
       },
       notes: "",
@@ -470,7 +470,7 @@ export function CheckoutPageClient() {
                       <Label htmlFor="shipping.country">Country *</Label>
                       <Input
                         id="shipping.country"
-                        placeholder="USA"
+                        placeholder="US"
                         {...register("shipping.country")}
                       />
                       {errors.shipping?.country && (
