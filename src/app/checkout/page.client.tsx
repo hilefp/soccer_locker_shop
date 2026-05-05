@@ -81,7 +81,7 @@ export function CheckoutPageClient() {
         address2: "",
         city: user?.profile?.city || "",
         state: user?.profile?.state || "",
-        country: user?.profile?.country || "US",
+        country: "US",
         postalCode: user?.profile?.postalCode || "",
       },
       notes: "",
@@ -465,35 +465,19 @@ export function CheckoutPageClient() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="shipping.country">Country *</Label>
-                      <Input
-                        id="shipping.country"
-                        placeholder="US"
-                        {...register("shipping.country")}
-                      />
-                      {errors.shipping?.country && (
-                        <p className="text-sm text-destructive">
-                          {errors.shipping.country.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="shipping.postalCode">
-                        Postal Code *
-                      </Label>
-                      <Input
-                        id="shipping.postalCode"
-                        placeholder="10001"
-                        {...register("shipping.postalCode")}
-                      />
-                      {errors.shipping?.postalCode && (
-                        <p className="text-sm text-destructive">
-                          {errors.shipping.postalCode.message}
-                        </p>
-                      )}
-                    </div>
+                  <input type="hidden" {...register("shipping.country")} />
+                  <div className="grid gap-2">
+                    <Label htmlFor="shipping.postalCode">Postal Code *</Label>
+                    <Input
+                      id="shipping.postalCode"
+                      placeholder="10001"
+                      {...register("shipping.postalCode")}
+                    />
+                    {errors.shipping?.postalCode && (
+                      <p className="text-sm text-destructive">
+                        {errors.shipping.postalCode.message}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
