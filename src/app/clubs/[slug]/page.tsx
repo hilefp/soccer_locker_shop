@@ -1,4 +1,4 @@
-import { Mail } from "lucide-react";
+import { Construction, Mail } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
@@ -17,6 +17,23 @@ export default async function ClubPage({ params }: ClubPageProps) {
 
   if (!club) {
     notFound();
+  }
+
+  if (club.isUnderConstruction) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-background px-4">
+        <div className="max-w-xl text-center">
+          <Construction className="mx-auto h-16 w-16 text-muted-foreground" />
+          <h1 className="mt-6 text-3xl font-bold tracking-tight md:text-4xl">
+            {club.name} is under construction
+          </h1>
+          <p className="mt-4 text-base text-muted-foreground md:text-lg">
+            {club.underConstructionMessage ||
+              "This club's shop is being set up and will be available soon. Please check back later."}
+          </p>
+        </div>
+      </main>
+    );
   }
 
   const id = club.id;

@@ -3,11 +3,21 @@ import type { Club, ClubPackageDetail, ClubPackageSummary, ClubProductDetail, Cl
 import { slugify } from "~/lib/slugify";
 
 /**
- * Fetch all active clubs from the API (server-side)
+ * Fetch all active clubs from the API (server-side).
+ *
+ * By default the public listing excludes under-construction clubs (the backend
+ * filters them out). Pass `includeUnderConstruction: true` to opt into them —
+ * used by the shop grid (so under-construction clubs stay visible) and the slug
+ * resolver (so they reach their detail page instead of 404'ing).
  */
-export async function getClubs(): Promise<Club[]> {
+export async function getClubs(
+  options?: { includeUnderConstruction?: boolean }
+): Promise<Club[]> {
   try {
-    const clubs = await apiGetServer<Club[]>("/api/shop/clubs");
+    const url = options?.includeUnderConstruction
+      ? "/api/shop/clubs?includeUnderConstruction=true"
+      : "/api/shop/clubs";
+    const clubs = await apiGetServer<Club[]>(url);
     return clubs.filter((club) => club.isActive);
   } catch (error) {
     console.error("Error fetching clubs:", error);
@@ -33,7 +43,9 @@ export async function getClubById(id: string): Promise<Club | null> {
  */
 export async function getClubBySlug(slug: string): Promise<Club | null> {
   try {
-    const clubs = await getClubs();
+    // Include under-construction clubs so they resolve to their detail page
+    // (which renders the Under Construction screen) instead of 404'ing.
+    const clubs = await getClubs({ includeUnderConstruction: true });
     return clubs.find((club) => slugify(club.name) === slug) ?? null;
   } catch (error) {
     console.error(`Error fetching club by slug ${slug}:`, error);
