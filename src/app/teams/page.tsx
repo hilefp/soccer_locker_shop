@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TeamsPage() {
-  const clubs = await getClubs();
+  const clubs = await getClubs({ includeUnderConstruction: true });
 
   return (
     <main className="min-h-screen bg-background">

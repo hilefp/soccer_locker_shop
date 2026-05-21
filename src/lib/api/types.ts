@@ -197,6 +197,8 @@ export interface Club {
   personInChargeEmail: string | null;
   personInChargePhone: string | null;
   isActive: boolean;
+  isUnderConstruction: boolean;
+  underConstructionMessage: string | null;
   createdAt: string;
   updatedAt: string;
 }

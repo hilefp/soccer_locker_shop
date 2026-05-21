@@ -24,7 +24,7 @@ const carouselSlides = [
 ];
 
 export default async function HomePage() {
-  const clubs = await getClubs();
+  const clubs = await getClubs({ includeUnderConstruction: true });
 
   return (
     <main className="min-h-screen bg-background">
