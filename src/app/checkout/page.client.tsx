@@ -39,9 +39,7 @@ import { Textarea } from "~/ui/primitives/textarea";
 
 function calculateShipping(totalItems: number): number {
   if (totalItems <= 0) return 0;
-  if (totalItems <= 2) return 7.99;
-  if (totalItems <= 12) return 11.99;
-  return 14.99;
+  return 11.99;
 }
 
 /* -------------------------------------------------------------------------- */
