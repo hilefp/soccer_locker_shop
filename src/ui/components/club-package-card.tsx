@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import type { ClubPackageSummary } from "~/lib/api/types";
 import { cn } from "~/lib/cn";
+import { sanitizeRichText } from "~/lib/utils/sanitize-html";
 
 interface ClubPackageCardProps {
   pkg: ClubPackageSummary;
@@ -54,9 +55,10 @@ export function ClubPackageCard({ pkg, clubSlug }: ClubPackageCardProps) {
         </h3>
 
         {pkg.description && (
-          <p className="mb-3 line-clamp-2 text-xs text-muted-foreground">
-            {pkg.description}
-          </p>
+          <p
+            className="mb-3 line-clamp-2 text-xs text-muted-foreground [&_ul]:list-disc [&_ul]:pl-4"
+            dangerouslySetInnerHTML={{ __html: sanitizeRichText(pkg.description) }}
+          />
         )}
 
         <div className="mt-auto flex items-center justify-between pt-2">
