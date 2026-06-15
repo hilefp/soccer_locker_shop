@@ -47,6 +47,31 @@ const loadCartFromStorage = (): CartItem[] => {
 };
 
 /* -------------------------------------------------------------------------- */
+/*                          Cart-item identity                                */
+/* -------------------------------------------------------------------------- */
+
+// Two cart lines can share the same product/variant but carry different player
+// customization (e.g. one jersey per child). To keep them as separate lines we
+// fold a stable, key-order-independent signature of the custom fields into the
+// line id: identical customization collapses into one line (quantity +1) while
+// different customization produces a distinct line.
+const customFieldsSignature = (fields?: Record<string, unknown>): string => {
+  if (!fields) return "";
+  const keys = Object.keys(fields).sort();
+  if (keys.length === 0) return "";
+  const ordered = keys.reduce<Record<string, unknown>>((acc, key) => {
+    acc[key] = fields[key];
+    return acc;
+  }, {});
+  return JSON.stringify(ordered);
+};
+
+const cartItemKey = (item: Omit<CartItem, "quantity">): string => {
+  const sig = customFieldsSignature(item.customFields);
+  return sig ? `${item.id}::${sig}` : item.id;
+};
+
+/* -------------------------------------------------------------------------- */
 /*                               Provider                                     */
 /* -------------------------------------------------------------------------- */
 
@@ -75,14 +100,17 @@ export function CartProvider({ children }: React.PropsWithChildren) {
   const addItem = React.useCallback(
     (newItem: Omit<CartItem, "quantity">, qty = 1) => {
       if (qty <= 0) return;
+      // Distinguish lines by customization so two children with the same
+      // product/size stay on separate lines instead of merging to quantity 2.
+      const id = cartItemKey(newItem);
       setItems((prev) => {
-        const existing = prev.find((i) => i.id === newItem.id);
+        const existing = prev.find((i) => i.id === id);
         if (existing) {
           return prev.map((i) =>
-            i.id === newItem.id ? { ...i, quantity: i.quantity + qty } : i,
+            i.id === id ? { ...i, quantity: i.quantity + qty } : i,
           );
         }
-        return [...prev, { ...newItem, quantity: qty }];
+        return [...prev, { ...newItem, id, quantity: qty }];
       });
     },
     [],
