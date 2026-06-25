@@ -33,8 +33,9 @@ const STATUS_CONFIG: Record<string, { label: string; description: string }> = {
     description: "Your order has been delivered",
   },
   MISSING: {
-    label: "Missing",
-    description: "There is an issue with your order",
+    label: "In Progress",
+    description:
+      "Your order is being processed. A few items are currently out of stock, but the remaining items are being processed and prepared for shipment. We'll keep you updated as soon as the backordered items become available.",
   },
   REFUND: {
     label: "Refund",
