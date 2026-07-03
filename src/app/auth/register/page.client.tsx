@@ -73,6 +73,14 @@ export function RegisterPageClient() {
   };
 
   const onSubmit = async (data: RegisterFormData) => {
+    // Guard against premature submission: pressing Enter on an earlier step
+    // triggers the form's submit handler even though all required fields may
+    // already be valid. Only create the account from the final step.
+    if (step < 3) {
+      await nextStep();
+      return;
+    }
+
     try {
       // Remove confirmPassword before sending
       const { confirmPassword: _confirmPassword, ...registerData } = data;
@@ -362,6 +370,7 @@ export function RegisterPageClient() {
                   {step < 3 ? (
                     <Button
                       className="flex-1"
+                      key="next-button"
                       onClick={nextStep}
                       type="button"
                     >
@@ -371,6 +380,7 @@ export function RegisterPageClient() {
                     <Button
                       className="flex-1"
                       disabled={isSubmitting}
+                      key="submit-button"
                       type="submit"
                     >
                       {isSubmitting ? "Creating account..." : "Create Account"}
