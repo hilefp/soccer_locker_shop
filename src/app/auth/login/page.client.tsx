@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -22,6 +23,7 @@ export function LoginPageClient() {
   const searchParams = useSearchParams();
   const { login } = useAuth();
   const [verificationBanner, setVerificationBanner] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   React.useEffect(() => {
     if (searchParams.get("reason") === "session_expired") {
@@ -152,11 +154,33 @@ export function LoginPageClient() {
                       Forgot password?
                     </Link>
                   </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...register("password")}
-                  />
+                  <div className="relative">
+                    <Input
+                      className="pr-10"
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      {...register("password")}
+                    />
+                    <button
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                      className={`
+                        absolute inset-y-0 right-0 flex items-center px-3
+                        text-muted-foreground
+                        hover:text-foreground
+                      `}
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      tabIndex={-1}
+                      type="button"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
                   {errors.password && (
                     <p className="text-sm text-destructive">
                       {errors.password.message}
