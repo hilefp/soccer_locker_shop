@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,6 +31,8 @@ export function RegisterPageClient() {
   const { register: registerUser } = useAuth();
   const [step, setStep] = useState(1);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -48,7 +51,7 @@ export function RegisterPageClient() {
     const fields = getStepFields(step);
     const isValid = await trigger(fields);
     if (isValid) {
-      setStep((prev) => Math.min(prev + 1, 4));
+      setStep((prev) => Math.min(prev + 1, 3));
     }
   };
 
@@ -64,8 +67,6 @@ export function RegisterPageClient() {
         return ["firstName", "lastName", "phone"] as const;
       case 3:
         return ["address", "city", "state", "country", "postalCode"] as const;
-      case 4:
-        return ["taxId", "companyName", "newsletter"] as const;
       default:
         return [] as const;
     }
@@ -136,13 +137,13 @@ export function RegisterPageClient() {
           >
             <h2 className="text-3xl font-bold">Create Account</h2>
             <p className="text-sm text-muted-foreground">
-              Step {step} of 4 - {getStepTitle(step)}
+              Step {step} of 3 - {getStepTitle(step)}
             </p>
           </div>
 
           {/* Progress indicator */}
           <div className="flex gap-2">
-            {[1, 2, 3, 4].map((i) => (
+            {[1, 2, 3].map((i) => (
               <div
                 key={i}
                 className={`
@@ -175,11 +176,33 @@ export function RegisterPageClient() {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="password">Password *</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        {...register("password")}
-                      />
+                      <div className="relative">
+                        <Input
+                          className="pr-10"
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          {...register("password")}
+                        />
+                        <button
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
+                          className={`
+                            absolute inset-y-0 right-0 flex items-center px-3
+                            text-muted-foreground
+                            hover:text-foreground
+                          `}
+                          onClick={() => setShowPassword((prev) => !prev)}
+                          tabIndex={-1}
+                          type="button"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                       {errors.password && (
                         <p className="text-sm text-destructive">
                           {errors.password.message}
@@ -188,11 +211,37 @@ export function RegisterPageClient() {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        {...register("confirmPassword")}
-                      />
+                      <div className="relative">
+                        <Input
+                          className="pr-10"
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          {...register("confirmPassword")}
+                        />
+                        <button
+                          aria-label={
+                            showConfirmPassword
+                              ? "Hide password"
+                              : "Show password"
+                          }
+                          className={`
+                            absolute inset-y-0 right-0 flex items-center px-3
+                            text-muted-foreground
+                            hover:text-foreground
+                          `}
+                          onClick={() =>
+                            setShowConfirmPassword((prev) => !prev)
+                          }
+                          tabIndex={-1}
+                          type="button"
+                        >
+                          {showConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                       {errors.confirmPassword && (
                         <p className="text-sm text-destructive">
                           {errors.confirmPassword.message}
@@ -298,38 +347,6 @@ export function RegisterPageClient() {
                   </>
                 )}
 
-                {/* Step 4: Business Info */}
-                {step === 4 && (
-                  <>
-                    <div className="grid gap-2">
-                      <Label htmlFor="taxId">Tax ID (Optional)</Label>
-                      <Input
-                        id="taxId"
-                        placeholder="123-45-6789"
-                        {...register("taxId")}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="companyName">Company Name (Optional)</Label>
-                      <Input
-                        id="companyName"
-                        placeholder="Acme Inc"
-                        {...register("companyName")}
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        id="newsletter"
-                        type="checkbox"
-                        {...register("newsletter")}
-                      />
-                      <Label htmlFor="newsletter">
-                        Subscribe to newsletter
-                      </Label>
-                    </div>
-                  </>
-                )}
-
                 {/* Navigation Buttons */}
                 <div className="flex gap-4">
                   {step > 1 && (
@@ -342,7 +359,7 @@ export function RegisterPageClient() {
                       Back
                     </Button>
                   )}
-                  {step < 4 ? (
+                  {step < 3 ? (
                     <Button
                       className="flex-1"
                       onClick={nextStep}
@@ -421,8 +438,6 @@ function getStepTitle(step: number): string {
       return "Personal Information";
     case 3:
       return "Address";
-    case 4:
-      return "Business Information";
     default:
       return "";
   }
