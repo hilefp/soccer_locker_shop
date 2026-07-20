@@ -209,32 +209,8 @@ function TrackOrderContent() {
                   </div>
                 )}
 
-                {/* Missing Items */}
-                {orderData.status === "MISSING" && orderData.items && orderData.items.filter((i) => i.missingQuantity > 0).length > 0 && (
-                  <div className="rounded-lg border border-yellow-500/50 bg-yellow-50 p-4 dark:bg-yellow-900/20">
-                    <h3 className="mb-2 font-semibold text-yellow-800 dark:text-yellow-400">
-                      Missing Items
-                    </h3>
-                    <ul className="space-y-2">
-                      {orderData.items.filter((i) => i.missingQuantity > 0).map((item) => (
-                        <li className="flex items-center justify-between text-sm" key={item.id}>
-                          <span className="text-yellow-900 dark:text-yellow-300">
-                            {item.clubProduct?.name || item.name} {item.attributes && Object.keys(item.attributes).length > 0 ? `(${Object.values(item.attributes)[0]})` : ""}
-                          </span>
-                          <span className="text-yellow-700 dark:text-yellow-400">
-                            {item.missingQuantity} of {item.quantity} missing
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="mt-3 text-sm text-yellow-700 dark:text-yellow-400">
-                      We apologize for the inconvenience. We are working to get the missing items to you as soon as possible.
-                    </p>
-                  </div>
-                )}
-
                 {/* Estimated Delivery */}
-                {orderData.status !== "DELIVERED" && orderData.status !== "MISSING" && (
+                {orderData.status !== "DELIVERED" && (
                   <div>
                     <p className="text-sm text-muted-foreground">
                       Estimated Delivery:{" "}

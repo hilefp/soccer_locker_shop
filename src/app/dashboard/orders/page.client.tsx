@@ -36,15 +36,22 @@ function getStatusVariant(
   switch (status) {
     case "DELIVERED":
       return "default";
-    case "MISSING":
     case "REFUND":
       return "destructive";
     case "SHIPPING":
     case "PROCESSING":
+    // Surface MISSING as PROCESSING so customers don't think their order has an issue
+    case "MISSING":
       return "secondary";
     default:
       return "outline";
   }
+}
+
+function getStatusLabel(status: string) {
+  // Surface MISSING as PROCESSING so customers don't think their order has an issue
+  if (status === "MISSING") return "PROCESSING";
+  return status.replace(/_/g, " ");
 }
 
 function formatDate(dateStr: string) {
@@ -187,7 +194,7 @@ export function OrdersPageClient() {
                               <TableCell>{formatDate(order.createdAt)}</TableCell>
                               <TableCell>
                                 <Badge variant={getStatusVariant(order.status)}>
-                                  {order.status.replace(/_/g, " ")}
+                                  {getStatusLabel(order.status)}
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right">
@@ -259,7 +266,7 @@ export function OrdersPageClient() {
                   {formatDate(selectedOrder.createdAt)}
                 </span>
                 <Badge variant={getStatusVariant(selectedOrder.status)}>
-                  {selectedOrder.status.replace(/_/g, " ")}
+                  {getStatusLabel(selectedOrder.status)}
                 </Badge>
               </div>
 
