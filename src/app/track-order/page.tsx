@@ -148,7 +148,7 @@ function TrackOrderContent() {
                   {orderData.status === 'PICKING_UP'
                     ? 'Preparing'
                     : orderData.status === 'MISSING'
-                      ? 'In Progress'
+                      ? 'Ready to Print'
                       : orderData.status?.replace(/_/g, ' ').toLowerCase() || 'Unknown'}
                 </span>
               </div>
