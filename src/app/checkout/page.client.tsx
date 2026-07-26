@@ -400,7 +400,7 @@ export function CheckoutPageClient() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="shipping.phone">Phone (Optional)</Label>
+                    <Label htmlFor="shipping.phone">Phone *</Label>
                     <Input
                       id="shipping.phone"
                       placeholder="+1 (555) 123-4567"
