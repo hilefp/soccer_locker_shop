@@ -32,11 +32,6 @@ const STATUS_CONFIG: Record<string, { label: string; description: string }> = {
     label: "Delivered",
     description: "Your order has been delivered",
   },
-  MISSING: {
-    label: "In Progress",
-    description:
-      "Your order is being processed. A few items are currently out of stock, but the remaining items are being processed and prepared for shipment. We'll keep you updated as soon as the backordered items become available.",
-  },
   REFUND: {
     label: "Refund",
     description: "Your order has been refunded",
@@ -49,9 +44,13 @@ const STATUS_CONFIG: Record<string, { label: string; description: string }> = {
 export function getOrderTimeline(order: Order): OrderTimelineStep[] {
   const timeline: OrderTimelineStep[] = [];
 
-  // Define the complete order flow (normal flow, excluding Missing/Refund)
+  // MISSING is an internal inventory status and is never surfaced to customers.
+  // Keep the order at PRINT and show the rest of the flow as upcoming steps.
+  const status = order.status === "MISSING" ? "PRINT" : order.status;
+
+  // Define the complete order flow (normal flow, excluding Refund)
   // Include PARTIALLY_SHIPPED step only if the order has that status
-  const hasPartiallyShipped = order.status === "PARTIALLY_SHIPPED" || !!order.partiallyShippedAt;
+  const hasPartiallyShipped = status === "PARTIALLY_SHIPPED" || !!order.partiallyShippedAt;
   const statusFlow = [
     "NEW",
     "PRINT",
@@ -71,13 +70,12 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
     PARTIALLY_SHIPPED: order.partiallyShippedAt,
     SHIPPING: order.shippedAt,
     DELIVERED: order.deliveredAt,
-    MISSING: order.updatedAt,
     REFUND: order.updatedAt,
   };
 
-  // Handle special statuses (Missing, Refund) that break normal flow
-  if (order.status === "MISSING" || order.status === "REFUND") {
-    // Show all completed steps up to the point it became Missing/Refund
+  // Handle the Refund status, which breaks the normal flow
+  if (status === "REFUND") {
+    // Show all completed steps up to the point it became Refund
     statusFlow.forEach((status) => {
       const timestamp = statusTimestamps[status];
       if (timestamp) {
@@ -99,9 +97,9 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
     });
 
     // Add the special status at the end
-    const config = STATUS_CONFIG[order.status];
+    const config = STATUS_CONFIG[status];
     timeline.push({
-      status: order.status.toLowerCase(),
+      status: status.toLowerCase(),
       label: config.label,
       description: config.description,
       date: formatDate(order.updatedAt),
@@ -114,7 +112,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
   }
 
   // Find current status index for normal flow
-  const currentStatusIndex = statusFlow.indexOf(order.status);
+  const currentStatusIndex = statusFlow.indexOf(status);
 
   // Build timeline for normal flow
   statusFlow.forEach((status, index) => {
@@ -131,7 +129,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
       status: status.toLowerCase(),
       label: config.label,
       description: config.description,
-      date: timestamp ? formatDate(timestamp) : null,
+      date: timestamp && index <= currentStatusIndex ? formatDate(timestamp) : null,
       completed,
       isActive,
       trackingNumber: status === "SHIPPING" ? order.trackingNumber || undefined : undefined,

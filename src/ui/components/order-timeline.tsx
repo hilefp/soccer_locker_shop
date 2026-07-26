@@ -7,7 +7,6 @@ import {
   Truck,
   Printer,
   ClipboardList,
-  AlertCircle,
   DollarSign,
 } from "lucide-react";
 import { cn } from "~/lib/cn";
@@ -38,9 +37,6 @@ const STATUS_CONFIG = {
   },
   delivered: {
     icon: PackageCheck,
-  },
-  missing: {
-    icon: AlertCircle,
   },
   refund: {
     icon: DollarSign,
