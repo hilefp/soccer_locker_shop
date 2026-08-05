@@ -86,6 +86,41 @@ export async function apiDelete<T>(
   return apiClientBrowser<T>(path, { method: "DELETE", ...options });
 }
 
+/**
+ * Extract the API's own explanation from a failed request.
+ *
+ * ofetch throws a FetchError whose `.message` describes the HTTP failure
+ * (`[POST] "http://localhost:4000/...": 409 Conflict`) rather than what the
+ * server said, so the response body has to be read explicitly. Also understands
+ * the `{ error }` shape our Next route handlers re-serialize backend errors
+ * into, and NestJS validation errors, which arrive as a string array.
+ */
+export function getApiErrorMessage(
+  error: unknown,
+  fallback = "Something went wrong. Please try again.",
+): string {
+  const err = error as Record<string, any> | null | undefined;
+
+  // err.data is the parsed JSON body; _data is ofetch's raw copy of it
+  const body = err?.data ?? err?.response?._data;
+  const raw = body?.message ?? body?.error;
+
+  if (Array.isArray(raw)) {
+    const joined = raw.filter((m): m is string => typeof m === "string").join(". ");
+    if (joined.trim()) return joined;
+  }
+  if (typeof raw === "string" && raw.trim()) return raw;
+
+  // A FetchError with no usable body only knows the transport failure, which is
+  // meaningless to a customer. Anything else — including an Error we threw after
+  // already reading the body — carries a message worth showing.
+  if (err?.name !== "FetchError" && error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 // Helper to handle API responses
 export function handleApiResponse<T>(
   response: ApiResponse<T>,

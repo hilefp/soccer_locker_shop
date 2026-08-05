@@ -7,6 +7,7 @@ import {
   getSession,
   setAuthCookie,
 } from "~/lib/api/auth-server";
+import { getApiErrorMessage } from "~/lib/api/client";
 import {
   loginShopCustomer,
   registerShopCustomer,
@@ -45,15 +46,19 @@ export async function POST(
         });
       } catch (registerError: unknown) {
         console.error("❌ Registration failed:", registerError);
-        if (registerError && typeof registerError === 'object') {
-          if ('data' in registerError) {
-            console.error("Backend error response:", registerError.data);
-          }
-          if ('statusCode' in registerError) {
-            console.error("Backend status code:", registerError.statusCode);
-          }
-        }
-        throw registerError;
+
+        // Forward the backend's own explanation (e.g. the 409 naming the
+        // duplicate email and telling the customer to sign in) instead of
+        // letting this fall through to the generic 500 below, which would
+        // serialize ofetch's transport message.
+        const err = registerError as Record<string, unknown> | null;
+        const statusCode =
+          err && typeof err.statusCode === "number" ? err.statusCode : 500;
+
+        return NextResponse.json(
+          { error: getApiErrorMessage(registerError, "Registration failed") },
+          { status: statusCode },
+        );
       }
     }
 
@@ -134,11 +139,13 @@ export async function POST(
     );
   } catch (error) {
     console.error("Auth route error:", error);
+    const err = error as Record<string, unknown> | null;
+    const statusCode =
+      err && typeof err.statusCode === "number" ? err.statusCode : 500;
+
     return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Authentication failed",
-      },
-      { status: 500 },
+      { error: getApiErrorMessage(error, "Authentication failed") },
+      { status: statusCode },
     );
   }
 }

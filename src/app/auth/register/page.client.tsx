@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { SEO_CONFIG, SYSTEM_CONFIG } from "~/app";
+import { getApiErrorMessage } from "~/lib/api/client";
 import { useAuth } from "~/lib/hooks/use-auth";
 import { registerSchema } from "~/lib/validations/auth";
 import type { RegisterFormData } from "~/lib/validations/auth";
@@ -87,9 +88,7 @@ export function RegisterPageClient() {
       await registerUser(registerData);
       setShowSuccessDialog(true);
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Registration failed",
-      );
+      toast.error(getApiErrorMessage(err, "Registration failed"));
       console.error(err);
     }
   };
