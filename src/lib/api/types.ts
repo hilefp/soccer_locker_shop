@@ -449,6 +449,24 @@ export interface OrderItem {
   packagePrice?: string;
 }
 
+/**
+ * Raw order status enum as returned by the API. These values are shared with
+ * the warehouse admin app, so they are never display labels — render them
+ * through `getOrderStatusLabel` from `~/lib/utils/order-status`.
+ */
+export type OrderStatus =
+  | "PENDING_PAYMENT"
+  | "NEW"
+  | "PRINT"
+  | "PICKING_UP"
+  | "PROCESSING"
+  | "PARTIALLY_SHIPPED"
+  | "SHIPPING"
+  | "DELIVERED"
+  | "MISSING"
+  | "REFUND"
+  | "FAILED";
+
 export interface OrderStatusHistory {
   id: string;
   orderId: string;

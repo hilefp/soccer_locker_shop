@@ -9,6 +9,7 @@ import { Label } from "~/ui/primitives/label";
 import { Card, CardContent, CardHeader, CardTitle } from "~/ui/primitives/card";
 import { OrderTimeline } from "~/ui/components/order-timeline";
 import { getOrderTimeline, getEstimatedDelivery } from "~/lib/utils/order-timeline";
+import { getOrderStatusLabel } from "~/lib/utils/order-status";
 import type { Order, ApiResponse } from "~/lib/api/types";
 
 export default function TrackOrderPage() {
@@ -145,11 +146,7 @@ function TrackOrderContent() {
                     }
                   `}
                 >
-                  {orderData.status === 'PICKING_UP'
-                    ? 'Preparing'
-                    : orderData.status === 'MISSING'
-                      ? 'Ready to Print'
-                      : orderData.status?.replace(/_/g, ' ').toLowerCase() || 'Unknown'}
+                  {getOrderStatusLabel(orderData.status)}
                 </span>
               </div>
             </CardHeader>
