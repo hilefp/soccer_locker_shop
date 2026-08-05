@@ -199,6 +199,7 @@ export interface Club {
   isActive: boolean;
   isUnderConstruction: boolean;
   underConstructionMessage: string | null;
+  isRushFeeEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -410,6 +411,8 @@ export interface CheckoutResponse {
 export interface RushFeeResponse {
   rushFee: number;
   description: string;
+  /** False when the club has rush orders disabled — hide the rush option. */
+  enabled: boolean;
 }
 
 export interface ConfirmCheckoutRequest {
