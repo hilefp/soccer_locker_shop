@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { apiGet } from "~/lib/api/client";
 import type { Order, OrderItem } from "~/lib/api/types";
 import { useCurrentUserOrRedirect } from "~/lib/auth-client";
+import { getOrderStatusLabel } from "~/lib/utils/order-status";
 import { SidebarAccount } from "~/ui/components/sidebar-account";
 import { Badge } from "~/ui/primitives/badge";
 import { Button } from "~/ui/primitives/button";
@@ -46,12 +47,6 @@ function getStatusVariant(
     default:
       return "outline";
   }
-}
-
-function getStatusLabel(status: string) {
-  // Surface MISSING as PROCESSING so customers don't think their order has an issue
-  if (status === "MISSING") return "PROCESSING";
-  return status.replace(/_/g, " ");
 }
 
 function formatDate(dateStr: string) {
@@ -194,7 +189,7 @@ export function OrdersPageClient() {
                               <TableCell>{formatDate(order.createdAt)}</TableCell>
                               <TableCell>
                                 <Badge variant={getStatusVariant(order.status)}>
-                                  {getStatusLabel(order.status)}
+                                  {getOrderStatusLabel(order.status)}
                                 </Badge>
                               </TableCell>
                               <TableCell className="text-right">
@@ -266,7 +261,7 @@ export function OrdersPageClient() {
                   {formatDate(selectedOrder.createdAt)}
                 </span>
                 <Badge variant={getStatusVariant(selectedOrder.status)}>
-                  {getStatusLabel(selectedOrder.status)}
+                  {getOrderStatusLabel(selectedOrder.status)}
                 </Badge>
               </div>
 

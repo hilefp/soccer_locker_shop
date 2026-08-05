@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { apiPost } from "~/lib/api/client";
 import type { ConfirmCheckoutResponse } from "~/lib/api/types";
 import { useCart } from "~/lib/hooks/use-cart";
+import { getOrderStatusLabel } from "~/lib/utils/order-status";
 import { Button } from "~/ui/primitives/button";
 import {
   Card,
@@ -158,7 +159,7 @@ export function ConfirmPageClient() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Status</span>
                   <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                    {orderData.status}
+                    {getOrderStatusLabel(orderData.status)}
                   </span>
                 </div>
 

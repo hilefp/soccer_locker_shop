@@ -1,42 +1,27 @@
 import type { Order, OrderTimelineStep } from "~/lib/api/types";
+import { getOrderStatusLabel } from "~/lib/utils/order-status";
 
 /**
- * Status configuration for each order status
+ * Step descriptions for each order status. Labels come from
+ * ORDER_STATUS_LABELS so the timeline and the status badges can never drift.
  */
-const STATUS_CONFIG: Record<string, { label: string; description: string }> = {
-  NEW: {
-    label: "Order Placed",
-    description: "Your order has been received",
-  },
-  PRINT: {
-    label: "Ready to Print",
-    description: "Your order has been printed",
-  },
-  PICKING_UP: {
-    label: "Preparing",
-    description: "Your order is being prepared",
-  },
-  PROCESSING: {
-    label: "Processing",
-    description: "Your order is being processed",
-  },
-  PARTIALLY_SHIPPED: {
-    label: "Partially Shipped",
-    description: "Part of your order has been shipped",
-  },
-  SHIPPING: {
-    label: "Shipping",
-    description: "Your order is being shipped",
-  },
-  DELIVERED: {
-    label: "Delivered",
-    description: "Your order has been delivered",
-  },
-  REFUND: {
-    label: "Refund",
-    description: "Your order has been refunded",
-  },
+const STATUS_DESCRIPTIONS: Record<string, string> = {
+  NEW: "Your order has been received",
+  PRINT: "Your order has been printed",
+  PICKING_UP: "Your order is being prepared",
+  PROCESSING: "Your order is being processed",
+  PARTIALLY_SHIPPED: "Part of your order has been shipped",
+  SHIPPING: "Your order is being shipped",
+  DELIVERED: "Your order has been delivered",
+  REFUND: "Your order has been refunded",
 };
+
+function getStepConfig(status: string) {
+  return {
+    label: getOrderStatusLabel(status),
+    description: STATUS_DESCRIPTIONS[status] ?? "",
+  };
+}
 
 /**
  * Maps order data to timeline steps for display
@@ -79,10 +64,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
     statusFlow.forEach((status) => {
       const timestamp = statusTimestamps[status];
       if (timestamp) {
-        const config = STATUS_CONFIG[status] || {
-          label: status.replace(/_/g, " "),
-          description: "",
-        };
+        const config = getStepConfig(status);
 
         timeline.push({
           status: status.toLowerCase(),
@@ -97,7 +79,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
     });
 
     // Add the special status at the end
-    const config = STATUS_CONFIG[status];
+    const config = getStepConfig(status);
     timeline.push({
       status: status.toLowerCase(),
       label: config.label,
@@ -116,10 +98,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
 
   // Build timeline for normal flow
   statusFlow.forEach((status, index) => {
-    const config = STATUS_CONFIG[status] || {
-      label: status.replace(/_/g, " "),
-      description: "",
-    };
+    const config = getStepConfig(status);
 
     const timestamp = statusTimestamps[status];
     const completed = index <= currentStatusIndex && timestamp !== null;

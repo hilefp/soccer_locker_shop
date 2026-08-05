@@ -139,9 +139,15 @@ export function AuthProvider({ children }: React.PropsWithChildren) {
       });
 
       if (!response.ok) {
-        const error = (await response.json()) as { error?: string };
+        // Tolerate a non-JSON error body rather than masking the failure with
+        // a parse error
+        const error = (await response
+          .json()
+          .catch(() => ({}))) as { error?: string; message?: string };
         console.error("❌ Registration failed:", error);
-        throw new Error(error.error || "Registration failed");
+        throw new Error(
+          error.error || error.message || "Registration failed",
+        );
       }
 
       const result = (await response.json()) as { token: string; user: ShopCustomer };

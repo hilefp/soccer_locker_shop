@@ -199,6 +199,7 @@ export interface Club {
   isActive: boolean;
   isUnderConstruction: boolean;
   underConstructionMessage: string | null;
+  isRushFeeEnabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -410,6 +411,8 @@ export interface CheckoutResponse {
 export interface RushFeeResponse {
   rushFee: number;
   description: string;
+  /** False when the club has rush orders disabled — hide the rush option. */
+  enabled: boolean;
 }
 
 export interface ConfirmCheckoutRequest {
@@ -445,6 +448,24 @@ export interface OrderItem {
   packageName?: string;
   packagePrice?: string;
 }
+
+/**
+ * Raw order status enum as returned by the API. These values are shared with
+ * the warehouse admin app, so they are never display labels — render them
+ * through `getOrderStatusLabel` from `~/lib/utils/order-status`.
+ */
+export type OrderStatus =
+  | "PENDING_PAYMENT"
+  | "NEW"
+  | "PRINT"
+  | "PICKING_UP"
+  | "PROCESSING"
+  | "PARTIALLY_SHIPPED"
+  | "SHIPPING"
+  | "DELIVERED"
+  | "MISSING"
+  | "REFUND"
+  | "FAILED";
 
 export interface OrderStatusHistory {
   id: string;

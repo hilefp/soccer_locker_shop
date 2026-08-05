@@ -53,6 +53,7 @@ export function CheckoutPageClient() {
   const [cartSyncing, setCartSyncing] = React.useState(false);
   const [rushFeeAmount, setRushFeeAmount] = React.useState(0);
   const [rushDescription, setRushDescription] = React.useState("");
+  const [rushFeeEnabled, setRushFeeEnabled] = React.useState(false);
   const [couponCode, setCouponCode] = React.useState("");
   const [couponValidating, setCouponValidating] = React.useState(false);
   const [appliedCoupon, setAppliedCoupon] = React.useState<{
@@ -90,12 +91,29 @@ export function CheckoutPageClient() {
 
   const isRushOrder = watch("isRushOrder");
 
+  // All cart items belong to the same club
+  const clubId = React.useMemo(
+    () => items.find((i) => i.clubId)?.clubId,
+    [items],
+  );
+
+  // The rush option only exists when the club has it enabled and a fee is set
+  const rushAvailable = rushFeeEnabled && rushFeeAmount > 0;
+
+  // Never let a stale/persisted rush flag survive once the option is hidden,
+  // otherwise the displayed total would include a fee the backend won't charge
+  React.useEffect(() => {
+    if (!rushAvailable && isRushOrder) {
+      setValue("isRushOrder", false);
+    }
+  }, [rushAvailable, isRushOrder, setValue]);
+
   const TAX_RATE = 0.07;
   const baseShippingCost = calculateShipping(itemCount);
   const shippingCost =
     appliedCoupon?.type === "FREE_SHIPPING" ? 0 : baseShippingCost;
   const tax = subtotal * TAX_RATE;
-  const rushFee = isRushOrder ? rushFeeAmount : 0;
+  const rushFee = rushAvailable && isRushOrder ? rushFeeAmount : 0;
   const total = subtotal + tax + shippingCost + rushFee;
 
   /* ---------------------- Coupon validation ----------------------------- */
@@ -196,27 +214,37 @@ export function CheckoutPageClient() {
 
   /* ---------------------- Fetch rush fee --------------------------------- */
   React.useEffect(() => {
+    let cancelled = false;
+
     async function fetchRushFee() {
       try {
+        const query = clubId
+          ? `?${new URLSearchParams({ clubId }).toString()}`
+          : "";
         const data = await apiGet<RushFeeResponse>(
-          "/api/shop/checkout/rush-fee",
+          `/api/shop/checkout/rush-fee${query}`,
         );
+        if (cancelled) return;
         setRushFeeAmount(data.rushFee);
         setRushDescription(data.description);
+        setRushFeeEnabled(data.enabled);
       } catch (err) {
+        if (cancelled) return;
+        // Fail closed: without a confirmed answer, don't offer the rush option
+        setRushFeeEnabled(false);
         console.error("Failed to fetch rush fee:", err);
       }
     }
 
     void fetchRushFee();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [clubId]);
 
   /* ---------------------- Form submission -------------------------------- */
   const onSubmit = async (data: CheckoutFormData) => {
     try {
-      // Use the clubId from the first cart item (all items belong to the same club)
-      const clubId = items.find((i) => i.clubId)?.clubId;
-
       const payload: CheckoutRequest = {
         shipping: {
           name: `${data.shipping.firstName} ${data.shipping.lastName}`.trim(),
@@ -230,7 +258,7 @@ export function CheckoutPageClient() {
         },
         clubId,
         notes: data.notes || undefined,
-        isRushOrder: data.isRushOrder || false,
+        isRushOrder: rushAvailable ? data.isRushOrder || false : false,
         couponCode: appliedCoupon?.code || undefined,
       };
 
@@ -302,8 +330,8 @@ export function CheckoutPageClient() {
           >
 
 
-            {/* Rush Processing */}
-            {rushFeeAmount > 0 && (
+            {/* Rush Processing — hidden when the club has rush fees disabled */}
+            {rushAvailable && (
               <Card
                 className={
                   isRushOrder
@@ -617,7 +645,7 @@ export function CheckoutPageClient() {
                   </span>
                 </div>
               )}
-              {isRushOrder && rushFeeAmount > 0 && (
+              {rushAvailable && isRushOrder && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
                     Rush Processing
