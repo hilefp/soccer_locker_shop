@@ -12,16 +12,16 @@ import type { OrderStatus } from "~/lib/api/types";
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   PENDING_PAYMENT: "Pending Payment",
   NEW: "Order Placed",
-  PRINT: "Ready to Print",
-  PICKING_UP: "Preparing",
-  PROCESSING: "Processing",
+  PRINT: "In Production Queue",
+  PICKING_UP: "Gathering Your Items",
+  PROCESSING: "Customizing Your Order",
   PARTIALLY_SHIPPED: "Partially Shipped",
-  SHIPPING: "Shipping",
+  SHIPPING: "Shipped",
   DELIVERED: "Delivered",
   // MISSING is an internal inventory state. Customers see it as the previous
   // step so a stock issue we are already handling doesn't read as a problem
   // with their order.
-  MISSING: "Ready to Print",
+  MISSING: "In Production Queue",
   REFUND: "Refund",
   FAILED: "Payment Failed",
 };

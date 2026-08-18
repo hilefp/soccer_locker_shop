@@ -6,20 +6,30 @@ import { getOrderStatusLabel } from "~/lib/utils/order-status";
  * ORDER_STATUS_LABELS so the timeline and the status badges can never drift.
  */
 const STATUS_DESCRIPTIONS: Record<string, string> = {
-  NEW: "Your order has been received",
-  PRINT: "Your order has been printed",
-  PICKING_UP: "Your order is being prepared",
-  PROCESSING: "Your order is being processed",
-  PARTIALLY_SHIPPED: "Part of your order has been shipped",
-  SHIPPING: "Your order is being shipped",
+  NEW: "We've received your order and it's in line for production",
+  PRINT: "Your order has been sent to our production team and will be prepared soon",
+  PICKING_UP: "Our team is picking each item in your order from inventory",
+  PROCESSING: "We're applying logos, names, and numbers to your uniforms",
+  PARTIALLY_SHIPPED: "Part of your order is on its way — the rest is still in production",
+  SHIPPING: "Your order is on its way — see your tracking number below",
   DELIVERED: "Your order has been delivered",
   REFUND: "Your order has been refunded",
+};
+
+/**
+ * Extra italic note shown under a step's description. Kept separate from
+ * STATUS_DESCRIPTIONS so the description stays the factual "what is happening"
+ * line and the note carries expectation-setting copy.
+ */
+const STATUS_NOTES: Record<string, string> = {
+  PRINT: "This is the stage that takes the longest — thank you for your patience.",
 };
 
 function getStepConfig(status: string) {
   return {
     label: getOrderStatusLabel(status),
     description: STATUS_DESCRIPTIONS[status] ?? "",
+    note: STATUS_NOTES[status],
   };
 }
 
@@ -70,6 +80,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
           status: status.toLowerCase(),
           label: config.label,
           description: config.description,
+          note: config.note,
           date: formatDate(timestamp),
           completed: true,
           isActive: false,
@@ -84,6 +95,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
       status: status.toLowerCase(),
       label: config.label,
       description: config.description,
+      note: config.note,
       date: formatDate(order.updatedAt),
       completed: true,
       isActive: true,
@@ -108,6 +120,7 @@ export function getOrderTimeline(order: Order): OrderTimelineStep[] {
       status: status.toLowerCase(),
       label: config.label,
       description: config.description,
+      note: config.note,
       date: timestamp && index <= currentStatusIndex ? formatDate(timestamp) : null,
       completed,
       isActive,
