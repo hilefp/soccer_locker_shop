@@ -582,6 +582,7 @@ export interface OrderTimelineStep {
   status: string;
   label: string;
   description: string;
+  note?: string;
   date: string | null;
   completed: boolean;
   isActive: boolean;

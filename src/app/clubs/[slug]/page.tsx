@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { getClubBySlug, getClubPackages, getClubProducts, getClubProductTags } from "~/lib/api/clubs";
 import { ClubProductsSection } from "~/ui/components/club-products-section";
+import { OrderProcessingTimesModal } from "~/ui/components/order-processing-times-modal";
 
 interface ClubPageProps {
   params: Promise<{
@@ -66,6 +67,7 @@ export default async function ClubPage({ params }: ClubPageProps) {
 
   return (
     <main className="min-h-screen bg-background">
+      <OrderProcessingTimesModal />
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 to-background py-20 md:py-32">
         {/* Cover Image Background */}

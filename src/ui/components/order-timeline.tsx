@@ -112,6 +112,11 @@ export function OrderTimeline({ timeline }: OrderTimelineProps) {
               <div className="mb-1 text-sm text-muted-foreground">
                 {item.description}
               </div>
+              {item.note && (
+                <div className="mb-1 text-sm italic text-muted-foreground">
+                  {item.note}
+                </div>
+              )}
               {item.date && (
                 <div className="text-xs text-muted-foreground">
                   {item.date}
