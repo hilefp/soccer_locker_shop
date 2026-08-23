@@ -380,7 +380,13 @@ export interface ServerCart {
   items: ServerCartItem[];
 }
 
-// Checkout Types (Square redirect flow)
+// Checkout Types (embedded Square Web Payments flow)
+export interface PaymentConfigResponse {
+  applicationId: string;
+  locationId: string;
+  environment: "sandbox" | "production";
+}
+
 export interface CheckoutRequest {
   shipping: {
     name: string;
@@ -396,15 +402,33 @@ export interface CheckoutRequest {
   notes?: string;
   isRushOrder?: boolean;
   couponCode?: string;
+  paymentMethod: "CARD";
 }
 
 export interface CheckoutResponse {
   orderId: string;
   orderNumber: string;
-  checkoutUrl: string;
   total: number;
+  subtotal: number;
+  taxTotal: number;
   shippingTotal: number;
   rushFee?: number;
+  message: string;
+}
+
+export interface PayCheckoutRequest {
+  orderId: string;
+  sourceId: string;
+  verificationToken?: string;
+}
+
+export interface PayCheckoutResponse {
+  orderId: string;
+  orderNumber: string;
+  status: string;
+  paymentId: string;
+  total: number | string;
+  receiptUrl?: string;
   message: string;
 }
 

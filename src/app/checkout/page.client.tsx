@@ -1,21 +1,36 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2, Package, ShoppingCart, Tag, Zap } from "lucide-react";
+import {
+  CheckCircle2,
+  CreditCard,
+  Loader2,
+  ShoppingCart,
+  Tag,
+  Zap,
+} from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
-import { apiDelete, apiGet, apiPost } from "~/lib/api/client";
+import { apiDelete, apiGet, apiPost, getApiErrorMessage } from "~/lib/api/client";
 import type {
   CheckoutRequest,
   CheckoutResponse,
+  ConfirmCheckoutResponse,
+  PayCheckoutRequest,
+  PayCheckoutResponse,
   RushFeeResponse,
 } from "~/lib/api/types";
 import { useAuth } from "~/lib/hooks/use-auth";
 import { useCart } from "~/lib/hooks/use-cart";
+import {
+  useSquarePayments,
+  type SquareBillingContact,
+} from "~/lib/hooks/use-square-payments";
+import { getOrderStatusLabel } from "~/lib/utils/order-status";
 import {
   checkoutSchema,
   type CheckoutFormData,
@@ -46,11 +61,56 @@ function calculateShipping(totalItems: number): number {
 /*                          Checkout Page Client                              */
 /* -------------------------------------------------------------------------- */
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface PaymentSuccess {
+  orderNumber: string;
+  status: string;
+  total: number | string;
+}
+
 export function CheckoutPageClient() {
   const { user, loading: authLoading } = useAuth();
-  const { items, subtotal, itemCount } = useCart();
+  const { items, subtotal, itemCount, clearCart } = useCart();
 
   const [cartSyncing, setCartSyncing] = React.useState(false);
+  const [step, setStep] = React.useState<"details" | "success">("details");
+  const [order, setOrder] = React.useState<CheckoutResponse | null>(null);
+  const [payState, setPayState] = React.useState<
+    "idle" | "paying" | "verifying"
+  >("idle");
+  const [payError, setPayError] = React.useState<string | null>(null);
+  const [successData, setSuccessData] = React.useState<PaymentSuccess | null>(
+    null,
+  );
+
+  // Kept for retries: ORDER_EXPIRED recreates the order from the same payload,
+  // and verifyBuyer needs the buyer's contact data on every (re)tokenization
+  const checkoutPayloadRef = React.useRef<CheckoutRequest | null>(null);
+  const billingContactRef = React.useRef<SquareBillingContact>({});
+  // Fingerprint of the payload the current order was created with: a retry
+  // after a declined card reuses the order, but any edit creates a fresh one
+  const orderPayloadKeyRef = React.useRef<null | string>(null);
+
+  const pollCancelledRef = React.useRef(false);
+  React.useEffect(
+    () => () => {
+      pollCancelledRef.current = true;
+    },
+    [],
+  );
+
+  const {
+    cardEntered,
+    cardHasError,
+    status: squareStatus,
+    tokenize,
+    verifyBuyer,
+  } = useSquarePayments({
+    enabled: step === "details" && !cartSyncing && items.length > 0,
+  });
   const [rushFeeAmount, setRushFeeAmount] = React.useState(0);
   const [rushDescription, setRushDescription] = React.useState("");
   const [rushFeeEnabled, setRushFeeEnabled] = React.useState(false);
@@ -242,8 +302,11 @@ export function CheckoutPageClient() {
     };
   }, [clubId]);
 
-  /* ---------------------- Form submission -------------------------------- */
+  /* ---------------------- Form submission (create order + pay) ----------- */
   const onSubmit = async (data: CheckoutFormData) => {
+    if (payState !== "idle" || squareStatus !== "ready") return;
+    setPayError(null);
+    setPayState("paying");
     try {
       const payload: CheckoutRequest = {
         shipping: {
@@ -260,16 +323,42 @@ export function CheckoutPageClient() {
         notes: data.notes || undefined,
         isRushOrder: rushAvailable ? data.isRushOrder || false : false,
         couponCode: appliedCoupon?.code || undefined,
+        paymentMethod: "CARD",
       };
 
-      const result = await apiPost<CheckoutResponse>(
-        "/api/shop/checkout",
-        payload,
-      );
+      billingContactRef.current = {
+        givenName: data.shipping.firstName,
+        familyName: data.shipping.lastName,
+        email: data.shipping.email,
+        addressLines: [data.shipping.address1, data.shipping.address2].filter(
+          (line): line is string => !!line,
+        ),
+        city: data.shipping.city,
+        state: data.shipping.state,
+        postalCode: data.shipping.postalCode,
+        countryCode: "US",
+      };
 
-      // Redirect to Square hosted checkout page
-      window.location.href = result.checkoutUrl;
+      // Reuse the pending order on a payment retry; only recreate when the
+      // buyer changed something that affects it (address, coupon, rush, notes)
+      const payloadKey = JSON.stringify(payload);
+      let currentOrder = order;
+      if (!currentOrder || orderPayloadKeyRef.current !== payloadKey) {
+        currentOrder = await apiPost<CheckoutResponse>(
+          "/api/shop/checkout",
+          payload,
+        );
+        checkoutPayloadRef.current = payload;
+        orderPayloadKeyRef.current = payloadKey;
+        setOrder(currentOrder);
+      }
+
+      await attemptPay(currentOrder, {
+        canRetryToken: true,
+        canRecreateOrder: true,
+      });
     } catch (err: any) {
+      // Only order creation throws here — attemptPay reports its own errors
       const apiMessages = err?.data?.message ?? err?.response?._data?.message;
       const errorText = Array.isArray(apiMessages)
         ? apiMessages.join(". ")
@@ -280,8 +369,237 @@ export function CheckoutPageClient() {
             : "Checkout failed. Please try again.";
       toast.error(errorText);
       console.error("Checkout error:", err);
+    } finally {
+      // A 503 switches to "verifying" and must survive this cleanup
+      setPayState((s) => (s === "paying" ? "idle" : s));
     }
   };
+
+  /* ---------------------- Payment ---------------------------------------- */
+  const handlePaymentSuccess = React.useCallback(
+    (result: PaymentSuccess) => {
+      setSuccessData(result);
+      setPayState("idle");
+      setStep("success");
+      clearCart();
+      toast.success("Payment successful!");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [clearCart],
+  );
+
+  // 503 fallback: the charge may or may not have gone through, so keep asking
+  // the backend until it knows. The backend deduplicates, so this can never
+  // double-charge; the card form stays locked the whole time.
+  const pollPaymentResult = React.useCallback(
+    async (orderId: string, orderNumber: string) => {
+      const MAX_ATTEMPTS = 40;
+      for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+        await sleep(3000);
+        if (pollCancelledRef.current) return;
+        try {
+          const result = await apiPost<ConfirmCheckoutResponse>(
+            "/api/shop/checkout/confirm",
+            { orderId },
+          );
+          if (pollCancelledRef.current) return;
+          if (result.status === "NEW" || result.status === "CONFIRMED") {
+            handlePaymentSuccess(result);
+            return;
+          }
+        } catch (err: any) {
+          if (pollCancelledRef.current) return;
+          const httpStatus =
+            err?.status ?? err?.statusCode ?? err?.response?.status;
+          const body = err?.data ?? err?.response?._data;
+          if (httpStatus === 402 || body?.error === "PAYMENT_DECLINED") {
+            setPayState("idle");
+            setPayError(
+              typeof body?.message === "string" && body.message
+                ? body.message
+                : "Your card was declined. Please try another card.",
+            );
+            return;
+          }
+          // Transient error — keep polling
+        }
+      }
+      if (!pollCancelledRef.current) {
+        setPayError(
+          `We couldn't confirm your payment. Please do NOT retry — contact support and mention order #${orderNumber}.`,
+        );
+      }
+    },
+    [handlePaymentSuccess],
+  );
+
+  const attemptPay = React.useCallback(
+    async (
+      currentOrder: CheckoutResponse,
+      opts: { canRetryToken: boolean; canRecreateOrder: boolean },
+    ): Promise<void> => {
+      // 1. Tokenize the card inside Square's iframe (tokens are single-use)
+      const tokenResult = await tokenize();
+      if (tokenResult.status !== "OK" || !tokenResult.token) {
+        const messages = tokenResult.errors
+          ?.map((e) => e.message ?? e.detail)
+          .filter(Boolean)
+          .join(" ");
+        setPayError(messages || "Please check your card details and try again.");
+        return;
+      }
+
+      // 2. Buyer verification (SCA/3DS)
+      let verificationToken: string | undefined;
+      try {
+        verificationToken = await verifyBuyer(
+          tokenResult.token,
+          Number(currentOrder.total).toFixed(2),
+          billingContactRef.current,
+        );
+      } catch {
+        setPayError("Card verification was not completed. Please try again.");
+        return;
+      }
+
+      // 3. Charge
+      try {
+        const payload: PayCheckoutRequest = {
+          orderId: currentOrder.orderId,
+          sourceId: tokenResult.token,
+          verificationToken,
+        };
+        const result = await apiPost<PayCheckoutResponse>(
+          "/api/shop/checkout/pay",
+          payload,
+        );
+        handlePaymentSuccess(result);
+      } catch (err: any) {
+        // Never log this error object anywhere: its request options echo the
+        // single-use payment tokens
+        const httpStatus =
+          err?.status ?? err?.statusCode ?? err?.response?.status;
+        const body = err?.data ?? err?.response?._data;
+        const errorCode = body?.error;
+
+        if (httpStatus === 402 && errorCode === "PAYMENT_DECLINED") {
+          setPayError(
+            typeof body?.message === "string" && body.message
+              ? body.message
+              : "Your card was declined. Please try another card.",
+          );
+          return;
+        }
+
+        if (errorCode === "INVALID_PAYMENT_TOKEN" && opts.canRetryToken) {
+          await attemptPay(currentOrder, { ...opts, canRetryToken: false });
+          return;
+        }
+
+        if (errorCode === "ORDER_EXPIRED" && opts.canRecreateOrder) {
+          const payload = checkoutPayloadRef.current;
+          if (payload) {
+            try {
+              const fresh = await apiPost<CheckoutResponse>(
+                "/api/shop/checkout",
+                payload,
+              );
+              setOrder(fresh);
+              await attemptPay(fresh, { ...opts, canRecreateOrder: false });
+              return;
+            } catch (recreateErr) {
+              setPayError(
+                getApiErrorMessage(
+                  recreateErr,
+                  "Your checkout session expired and we couldn't renew it. Please refresh and try again.",
+                ),
+              );
+              return;
+            }
+          }
+        }
+
+        if (httpStatus === 503 || errorCode === "PAYMENT_STATUS_UNKNOWN") {
+          setPayState("verifying");
+          void pollPaymentResult(currentOrder.orderId, currentOrder.orderNumber);
+          return;
+        }
+
+        setPayError(
+          getApiErrorMessage(err, "Payment failed. Please try again."),
+        );
+      }
+    },
+    [tokenize, verifyBuyer, handlePaymentSuccess, pollPaymentResult],
+  );
+
+
+  /* ---------------------- Success view ------------------------------------ */
+  // Must render before the empty-cart guard: the cart is cleared on success
+  if (step === "success") {
+    return (
+      <div className="container mx-auto max-w-7xl px-4 py-16 md:px-6">
+        <Card className="mx-auto max-w-lg">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-10 w-10 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl">Order Received!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <p className="text-center text-muted-foreground">
+              Thank you for your purchase. You will receive a confirmation
+              email shortly.
+            </p>
+
+            {successData && (
+              <div className="space-y-4">
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Order Number</span>
+                    <span className="font-medium">
+                      #{successData.orderNumber}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Status</span>
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                      {getOrderStatusLabel(successData.status)}
+                    </span>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-base font-semibold">Total Paid</span>
+                    <span className="text-base font-semibold">
+                      ${(Number(successData.total) || 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 pt-4">
+              <Link
+                href={`/track-order?orderNumber=${successData?.orderNumber || ""}`}
+              >
+                <Button className="w-full" size="lg">
+                  Track Your Order
+                </Button>
+              </Link>
+              <Link href="/">
+                <Button className="w-full" size="lg" variant="outline">
+                  Continue Shopping
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   /* ---------------------- Empty cart view -------------------------------- */
   if (items.length === 0 && !cartSyncing) {
@@ -316,6 +634,31 @@ export function CheckoutPageClient() {
   }
 
   /* ---------------------- Main checkout view ----------------------------- */
+  const payInFlight = isSubmitting || payState !== "idle";
+  const payDisabled =
+    payInFlight ||
+    cartSyncing ||
+    squareStatus !== "ready" ||
+    !cardEntered ||
+    cardHasError;
+  const payButtonContent =
+    payState === "verifying" ? (
+      <>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Verifying payment...
+      </>
+    ) : payInFlight ? (
+      <>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        Processing payment...
+      </>
+    ) : (
+      <>
+        <CreditCard className="mr-2 h-4 w-4" />
+        Pay ${total.toFixed(2)}
+      </>
+    );
+
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8 md:px-6">
       <h1 className="mb-8 text-3xl font-bold">Checkout</h1>
@@ -522,31 +865,71 @@ export function CheckoutPageClient() {
                   <Textarea
                     id="notes"
                     placeholder="e.g. Leave at front door, gift wrap, special sizing notes..."
-                    rows={4}
                     {...register("notes")}
                   />
                 </div>
               </CardContent>
             </Card>
 
+            {/* Payment — embedded Square card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5" />
+                  Payment
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Square's card iframe mounts here — card data never touches our code */}
+                <div className="relative rounded-md">
+                  <div id="card-container" className="min-h-22.5" />
+                  {(squareStatus === "idle" || squareStatus === "loading") && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
+                  {payState === "verifying" && (
+                    <div className="absolute inset-0 z-10 cursor-not-allowed bg-background/50" />
+                  )}
+                </div>
+
+                {squareStatus === "error" && (
+                  <p className="text-sm text-destructive">
+                    The payment form could not be loaded. Please refresh the
+                    page and try again.
+                  </p>
+                )}
+
+                {payState === "verifying" && (
+                  <div className="flex items-center gap-2 rounded-md bg-muted/50 p-3">
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                    <p className="text-sm text-muted-foreground">
+                      Verifying your payment… Please don&apos;t close this page
+                      or re-enter your card. Retrying is safe and will never
+                      charge you twice.
+                    </p>
+                  </div>
+                )}
+
+                {payError && (
+                  <p className="text-sm text-destructive">{payError}</p>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  Payments are processed securely by Square. Your card details
+                  never touch our servers.
+                </p>
+              </CardContent>
+            </Card>
+
             {/* Submit — desktop only */}
             <Button
               className="hidden w-full lg:flex"
-              disabled={isSubmitting || cartSyncing}
+              disabled={payDisabled}
               size="lg"
               type="submit"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Redirecting to payment...
-                </>
-              ) : (
-                <>
-                  <Package className="mr-2 h-4 w-4" />
-                  Proceed to Payment — ${total.toFixed(2)}
-                </>
-              )}
+              {payButtonContent}
             </Button>
           </form>
         </div>
@@ -645,13 +1028,13 @@ export function CheckoutPageClient() {
                   </span>
                 </div>
               )}
-              {rushAvailable && isRushOrder && (
+              {rushFee > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
                     Rush Processing
                   </span>
                   <span className="font-medium">
-                    ${rushFeeAmount.toFixed(2)}
+                    ${rushFee.toFixed(2)}
                   </span>
                 </div>
               )}
@@ -671,8 +1054,7 @@ export function CheckoutPageClient() {
 
               <div className="rounded-md bg-muted/50 p-3">
                 <p className="text-xs text-muted-foreground">
-                  You will be redirected to Square&apos;s secure payment page to
-                  complete your purchase.
+                  Your payment is processed securely by Square
                 </p>
               </div>
             </CardContent>
@@ -738,22 +1120,12 @@ export function CheckoutPageClient() {
           {/* Submit — mobile only */}
           <Button
             className="mt-4 w-full lg:hidden"
-            disabled={isSubmitting || cartSyncing}
+            disabled={payDisabled}
             form="checkout-form"
             size="lg"
             type="submit"
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Redirecting to payment...
-              </>
-            ) : (
-              <>
-                <Package className="mr-2 h-4 w-4" />
-                Proceed to Payment — ${total.toFixed(2)}
-              </>
-            )}
+            {payButtonContent}
           </Button>
         </div>
       </div>
