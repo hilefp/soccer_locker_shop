@@ -10,6 +10,15 @@ import type { CartItem } from "~/ui/components/cart";
 
 export interface CartContextType {
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
+  /**
+   * Stable id for this cart's checkout, minted when the cart stops being empty
+   * and dropped when it is cleared. Persisted beside the cart so a reload or a
+   * second tab keeps the same one.
+   *
+   * Empty string while the cart is empty. Not sent to the backend yet — the
+   * checkout DTO rejects unknown fields.
+   */
+  checkoutId: string;
   clearCart: () => void;
   itemCount: number;
   items: CartItem[];
@@ -29,6 +38,7 @@ const CartContext = React.createContext<CartContextType | undefined>(undefined);
 /* -------------------------------------------------------------------------- */
 
 const STORAGE_KEY = "cart";
+const CHECKOUT_ID_KEY = "cart-checkout-id";
 const DEBOUNCE_MS = 500;
 
 const loadCartFromStorage = (): CartItem[] => {
@@ -44,6 +54,16 @@ const loadCartFromStorage = (): CartItem[] => {
     console.error("Failed to load cart:", err);
   }
   return [];
+};
+
+const loadCheckoutIdFromStorage = (): string => {
+  if (typeof window === "undefined") return "";
+  try {
+    return localStorage.getItem(CHECKOUT_ID_KEY) ?? "";
+  } catch (err) {
+    console.error("Failed to load the checkout id:", err);
+    return "";
+  }
 };
 
 /* -------------------------------------------------------------------------- */
@@ -77,6 +97,27 @@ const cartItemKey = (item: Omit<CartItem, "quantity">): string => {
 
 export function CartProvider({ children }: React.PropsWithChildren) {
   const [items, setItems] = React.useState<CartItem[]>(loadCartFromStorage);
+  const [checkoutId, setCheckoutId] = React.useState<string>(
+    loadCheckoutIdFromStorage,
+  );
+
+  /* ---------------------- Checkout id for this cart --------------------- */
+  // Invariant: a non-empty cart always carries a checkout id, an empty one
+  // never does. Kept as an effect rather than minted inside addItem so a cart
+  // restored from storage (or one saved before this field existed) also gets
+  // one.
+  React.useEffect(() => {
+    if (items.length === 0) return;
+    if (checkoutId) return;
+
+    const next = crypto.randomUUID();
+    setCheckoutId(next);
+    try {
+      localStorage.setItem(CHECKOUT_ID_KEY, next);
+    } catch (err) {
+      console.error("Failed to save the checkout id:", err);
+    }
+  }, [items.length, checkoutId]);
 
   /* -------------------- Persist to localStorage (debounced) ------------- */
   const saveTimeout = React.useRef<null | ReturnType<typeof setTimeout>>(null);
@@ -147,7 +188,16 @@ export function CartProvider({ children }: React.PropsWithChildren) {
     });
   }, []);
 
-  const clearCart = React.useCallback(() => setItems([]), []);
+  // A cleared cart retires its checkout id; the next cart mints a fresh one.
+  const clearCart = React.useCallback(() => {
+    setItems([]);
+    setCheckoutId("");
+    try {
+      localStorage.removeItem(CHECKOUT_ID_KEY);
+    } catch (err) {
+      console.error("Failed to clear the checkout id:", err);
+    }
+  }, []);
 
   /* --------------------------- Derived data ----------------------------- */
   // Exclude virtual package header rows from the physical item count
@@ -166,6 +216,7 @@ export function CartProvider({ children }: React.PropsWithChildren) {
   const value = React.useMemo<CartContextType>(
     () => ({
       addItem,
+      checkoutId,
       clearCart,
       itemCount,
       items,
@@ -175,6 +226,7 @@ export function CartProvider({ children }: React.PropsWithChildren) {
     }),
     [
       items,
+      checkoutId,
       addItem,
       removeItem,
       updateQuantity,
