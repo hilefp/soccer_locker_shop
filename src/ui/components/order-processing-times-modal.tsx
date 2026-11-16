@@ -30,17 +30,21 @@ export function OrderProcessingTimesModal() {
 
         <div className="space-y-4 text-base leading-relaxed text-red-400 md:text-lg">
           <p>
-            <b>Orders placed before July 1st</b> will take approximately 3–4 business weeks to be completed and shipped.<br />
+            <b>Shipping Time: </b>During the off-season, orders typically take approximately 1–2 business weeks to be completed and shipped.<br />
+            <b>Important: </b>Customized jerseys with a name and/or number cannot be returned or exchanged.<br />
+            {/* <b>Orders placed before July 1st</b> will take approximately 3–4 business weeks to be completed and shipped.<br />
             <b>Orders placed on or after July 1st</b> will be processed within 4–6 business weeks. <br />
-            <b>Orders placed on or after August 1st</b> will require approximately 8–12 business weeks for completion and shipping.
+            <b>Orders placed on or after August 1st</b> will require approximately 8–12 business weeks for completion and shipping. */}
           </p>
 
           <Separator />
 
           <p>
-            <b>Los pedidos realizados antes del 1 de julio</b> tardarán aproximadamente de 3 a 4 semanas hábiles en ser completados y enviados.<br />
+            <b> Tiempo de envío:</b> Durante la temporada baja, los pedidos tardan aproximadamente 1 a 2 semanas hábiles en ser completados y enviados.<br />
+            <b> Importante:</b> Las camisetas personalizadas con nombre y/o número no se pueden devolver ni cambiar.<br />
+            {/* <b>Los pedidos realizados antes del 1 de julio</b> tardarán aproximadamente de 3 a 4 semanas hábiles en ser completados y enviados.<br />
             <b>Los pedidos realizados a partir del 1 de julio</b> serán procesados dentro de un plazo de 4 a 6 semanas hábiles. <br />
-            <b>Los pedidos realizados el 1 de agosto o después</b> requerirán aproximadamente 8–12 semanas hábiles para su finalización y envío.
+            <b>Los pedidos realizados el 1 de agosto o después</b> requerirán aproximadamente 8–12 semanas hábiles para su finalización y envío. */}
           </p>
         </div>
 
