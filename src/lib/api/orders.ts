@@ -35,7 +35,14 @@ export async function getOrderByNumberServer(
 
     return order;
   } catch (error) {
-    console.error("Failed to fetch order:", error);
-    return null;
+    // Only a backend 404 means "no such order". Anything else — a 429 from the
+    // shared throttle, a 5xx, a timeout — is "we don't know", and must not be
+    // reported as missing: checkout recovery reads 404 as "order gone" and
+    // offers the card form again (payment audit F-04).
+    const status =
+      (error as { status?: number; statusCode?: number })?.status ??
+      (error as { statusCode?: number })?.statusCode;
+    if (status === 404) return null;
+    throw error;
   }
 }

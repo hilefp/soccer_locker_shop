@@ -41,15 +41,18 @@ export async function GET(
     return NextResponse.json(order);
   } catch (error) {
     console.error("Error fetching order:", error);
+    // The lookup failed (throttled, backend down, timeout) — the order may
+    // well exist. 503, never 404: see getOrderByNumberServer.
     return NextResponse.json(
       {
         error: {
-          code: "INTERNAL_ERROR",
-          message: "An error occurred while fetching the order",
+          code: "LOOKUP_UNAVAILABLE",
+          message:
+            "We couldn't look up this order right now. Please try again in a moment.",
         },
         success: false,
       },
-      { status: 500 },
+      { status: 503 },
     );
   }
 }
