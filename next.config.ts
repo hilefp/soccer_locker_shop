@@ -6,6 +6,10 @@ import type { NextConfig } from "next";
  * may run scripts or frames there. Card is the only payment method (no Apple
  * Pay / Google Pay). Card data itself lives
  * in Square's iframes; this limits what else can run next to them.
+ * 3DS: the buyer's bank (its ACS) is a different domain for every issuer, and
+ * verifyBuyer posts a form into an iframe pointed at it. That is why frame-src
+ * and form-action allow any https: origin. Scripts stay locked down: the bank's
+ * page runs inside its own cross-origin iframe, never in this document.
  * 'unsafe-inline' is required by Next's inline bootstrap without nonces;
  * 'unsafe-eval' only in development (React Refresh).
  */
@@ -31,7 +35,7 @@ const THREE_DS = ["https://*.cardinalcommerce.com"];
 const checkoutCsp = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} ${[...SQUARE, ...THREE_DS, ...VERCEL].join(" ")}`,
-  `frame-src 'self' ${[...SQUARE, ...THREE_DS].join(" ")}`,
+  "frame-src 'self' https:",
   `connect-src 'self' ${apiOrigin} ${[...SQUARE, ...SQUARE_TELEMETRY, ...THREE_DS, ...VERCEL].join(" ")}${isDev ? " ws: http://localhost:*" : ""}`,
   "img-src 'self' data: blob: https:" + (isDev ? " http://localhost:*" : ""),
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com ${SQUARE.join(" ")}`,
@@ -39,7 +43,7 @@ const checkoutCsp = [
   "worker-src 'self' blob:",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  "form-action 'self' https:",
   "frame-ancestors 'none'",
 ].join("; ");
 
