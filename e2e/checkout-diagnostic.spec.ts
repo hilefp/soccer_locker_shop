@@ -6,6 +6,7 @@ import {
   CARDS,
   CheckoutLog,
   PAY_ROUTE,
+  PAYMENT_STATUS_ROUTE,
   cardFrame,
   dismissDialogs,
   fetchBackendOrder,
@@ -262,8 +263,8 @@ test.describe("Checkout — embedded Square card flow", () => {
 
     expect
       .soft(
-        log.of("order-lookup", "GET").length,
-        "the read-only order lookup is what reconciles",
+        log.statusLookups().length,
+        "the read-only payment-status lookup is what reconciles",
       )
       .toBeGreaterThan(0);
     expect
@@ -319,11 +320,11 @@ test.describe("Checkout — embedded Square card flow", () => {
     // The /pay call was stubbed, so no charge exists: the lookup keeps saying
     // PENDING_PAYMENT and the UI must keep waiting rather than decide.
     await expect
-      .poll(() => log.of("order-lookup", "GET").length, { timeout: 40_000 })
+      .poll(() => log.statusLookups().length, { timeout: 40_000 })
       .toBeGreaterThan(0);
 
     console.log(
-      `\n>>> CASE 4 order lookups: ${log.of("order-lookup", "GET").length}, ` +
+      `\n>>> CASE 4 order lookups: ${log.statusLookups().length}, ` +
         `POST /confirm: ${log.of("confirm").length}\n`,
     );
     expect
@@ -732,7 +733,7 @@ test.describe("Recovery of an unresolved payment", () => {
     const order = log.order;
 
     // Now break the lookup the recovery depends on, and come back.
-    await page.route("**/api/orders/*", (route) =>
+    await page.route(PAYMENT_STATUS_ROUTE, (route) =>
       route.abort("connectionfailed"),
     );
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -765,7 +766,7 @@ test.describe("Recovery of an unresolved payment", () => {
     const checkAgain = page.getByRole("button", { name: /check again/i });
     await expect.soft(checkAgain, "a retry is offered").toBeVisible();
 
-    const lookupsBefore = log.of("order-lookup", "GET").length;
+    const lookupsBefore = log.statusLookups().length;
     await checkAgain.click();
     await expect
       .soft(
@@ -775,7 +776,7 @@ test.describe("Recovery of an unresolved payment", () => {
       .toBeVisible({ timeout: 60_000 });
 
     // And once the lookup works again, it resolves.
-    await page.unroute("**/api/orders/*");
+    await page.unroute(PAYMENT_STATUS_ROUTE);
     await checkAgain.click();
     await expect
       .soft(
@@ -787,7 +788,7 @@ test.describe("Recovery of an unresolved payment", () => {
     await page.unroute(PAY_ROUTE);
     await log.settle();
     console.log(
-      `\n>>> CASE 10 lookup attempts: ${log.of("order-lookup", "GET").length} ` +
+      `\n>>> CASE 10 lookup attempts: ${log.statusLookups().length} ` +
         `(before the retry: ${lookupsBefore})\n`,
     );
     log.print("case 10 — lookup down");
@@ -889,7 +890,7 @@ test.describe("Contract responses — ready ahead of the backend", () => {
 
     // It reconciles through the read-only lookup, not through /confirm
     await expect
-      .poll(() => log.of("order-lookup", "GET").length, { timeout: 40_000 })
+      .poll(() => log.statusLookups().length, { timeout: 40_000 })
       .toBeGreaterThan(0);
     expect
       .soft(log.of("confirm").length, "POST /checkout/confirm stays off")

@@ -2,6 +2,8 @@
 
 import type { Order } from "~/lib/api/types";
 
+import { apiGet } from "~/lib/api/client";
+
 /* -------------------------------------------------------------------------- */
 /*                              Payment attempt                               */
 /* -------------------------------------------------------------------------- */
@@ -50,7 +52,10 @@ const MAX_ATTEMPT_AGE_MS = 24 * 60 * 60 * 1000;
 export const SETTLING_WINDOW_MS = 2 * 60 * 1000;
 
 /**
- * True while a `PENDING_PAYMENT` reading cannot be trusted as final.
+ * True while a "never attempted" (PENDING) reading cannot be trusted as final:
+ * the /pay request may still be on its way to the backend (a proxy timeout, a
+ * reload mid-request). A FAILED reading is the backend's definitive answer and
+ * is final at once; only PENDING waits out this window.
  *
  * An unparseable `startedAt` counts as inside the window: being wrong this way
  * costs the buyer a short wait, being wrong the other way can cost them a
@@ -120,63 +125,80 @@ export function clearPaymentAttempt(): void {
 /* -------------------------------------------------------------------------- */
 
 export type PaymentOutcome =
-  /** The backend has no such order — nothing to recover. */
+  /** The backend has no such order (for this customer) — nothing to recover. */
   | "gone"
+  /** A staff member must resolve this payment. Never offer the form. */
+  | "review"
   /** The order exists and is paid. */
   | "paid"
-  /** The order exists and carries no payment. Retrying it is safe. */
+  /** A charge may still be in flight on the backend. Wait; never re-pay. */
+  | "processing"
+  /** The backend states that no money was taken. Paying is safe. */
   | "unpaid"
-  /** We could not find out. Never treat this as a failure. */
+  /** We could not find out (offline, rate limited, logged out). Never a failure. */
   | "unknown";
 
-/**
- * Order statuses that mean "no money has been taken for this order".
- *
- * `FAILED` is in here because the order can be paid again; the backend
- * deduplicates `/pay` per `orderId`, so retrying the same order cannot charge
- * twice even if this reading turns out to be stale.
- */
-const UNPAID_STATUSES = new Set<string>(["PENDING_PAYMENT", "FAILED"]);
+/** `GET /api/shop/checkout/payment-status/:orderId` (backend, authenticated). */
+interface PaymentStatusResponse {
+  canRetry: boolean;
+  message: string;
+  orderId: string;
+  orderNumber: string;
+  status: "FAILED" | "NEEDS_REVIEW" | "PAID" | "PENDING" | "PROCESSING";
+  total: number;
+}
 
 /**
- * TEMPORARY — infers the payment state from the order's lifecycle status.
+ * Asks the backend what happened to the payment for this attempt's order.
  *
- * `GET /api/orders/:orderNumber` is the only read-only view of an order we
- * have, and it exposes `status` but no `paymentStatus`, so "paid" is inferred
- * from the status not being one of the unpaid ones. That conflates two axes and
- * breaks silently the day the backend inserts a new pre-`NEW` status.
- *
- * Replace the whole function with the real payment-state endpoint once the
- * backend ships it (tracked in the hand-off doc: we asked for `paymentStatus`
- * and `total` on the order, plus a `GET /checkout/pending` lookup).
- *
- * `POST /api/shop/checkout/confirm` is deliberately not used here: with the
- * current backend it can mark an order `FAILED` while the charge is still
- * settling. This is a plain GET and cannot change anything.
+ * Uses the authenticated, owner-only payment-status endpoint (payment audit
+ * F-04): it is backed by the payment-attempt records the backend locks on, so
+ * "unpaid" here is the backend's word that no charge exists or is in flight —
+ * not an inference. Only a real 404 for this customer means "gone"; any other
+ * failure (401, 429, 5xx, offline) is "unknown", which never discards the
+ * attempt and never offers the card form.
  */
+export interface ResolvedAttempt {
+  /** Backend payment status, when the backend answered. */
+  backendStatus?: PaymentStatusResponse["status"];
+  order?: Pick<Order, "status" | "total">;
+  outcome: PaymentOutcome;
+}
+
 export async function resolvePaymentAttempt(
   attempt: PaymentAttempt,
-): Promise<{ order?: Order; outcome: PaymentOutcome }> {
-  if (!attempt.orderNumber) return { outcome: "unknown" };
+): Promise<ResolvedAttempt> {
+  if (!attempt.orderId) return { outcome: "unknown" };
 
   try {
-    const response = await fetch(
-      `/api/orders/${encodeURIComponent(attempt.orderNumber)}`,
+    const status = await apiGet<PaymentStatusResponse>(
+      `/api/shop/checkout/payment-status/${encodeURIComponent(attempt.orderId)}`,
       { cache: "no-store" },
     );
-
-    if (response.status === 404) return { outcome: "gone" };
-    if (!response.ok) return { outcome: "unknown" };
-
-    const order = (await response.json()) as Order;
-    if (typeof order?.status !== "string") return { outcome: "unknown" };
-
-    return {
-      order,
-      outcome: UNPAID_STATUSES.has(order.status) ? "unpaid" : "paid",
-    };
-  } catch {
-    // Offline or the lookup is down — unknown, never "failed".
+    const order = { status: status.status, total: String(status.total) } as Pick<
+      Order,
+      "status" | "total"
+    >;
+    const backendStatus = status.status;
+    switch (status.status) {
+      case "PAID":
+        return { backendStatus, order, outcome: "paid" };
+      case "PROCESSING":
+        return { backendStatus, order, outcome: "processing" };
+      case "NEEDS_REVIEW":
+        return { backendStatus, order, outcome: "review" };
+      default:
+        return {
+          backendStatus,
+          order,
+          outcome: status.canRetry ? "unpaid" : "unknown",
+        };
+    }
+  } catch (err) {
+    const httpStatus =
+      (err as { status?: number; statusCode?: number })?.status ??
+      (err as { statusCode?: number })?.statusCode;
+    if (httpStatus === 404) return { outcome: "gone" };
     return { outcome: "unknown" };
   }
 }
@@ -193,9 +215,9 @@ export async function resolvePaymentAttemptWithRetries(
     delayMs?: number;
     isCancelled?: () => boolean;
   } = {},
-): Promise<{ order?: Order; outcome: PaymentOutcome }> {
+): Promise<ResolvedAttempt> {
   const { attempts = 3, delayMs = 1500, isCancelled } = options;
-  let last: { order?: Order; outcome: PaymentOutcome } = { outcome: "unknown" };
+  let last: ResolvedAttempt = { outcome: "unknown" };
 
   for (let i = 0; i < attempts; i++) {
     if (isCancelled?.()) return last;

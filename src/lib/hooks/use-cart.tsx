@@ -137,6 +137,22 @@ export function CartProvider({ children }: React.PropsWithChildren) {
     };
   }, [items]);
 
+  // Flush a pending debounced save when the page is being left (full
+  // navigation, reload, tab close) so the last change is never lost.
+  const itemsRef = React.useRef(items);
+  itemsRef.current = items;
+  React.useEffect(() => {
+    const flush = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(itemsRef.current));
+      } catch (err) {
+        console.error("Failed to save cart:", err);
+      }
+    };
+    window.addEventListener("pagehide", flush);
+    return () => window.removeEventListener("pagehide", flush);
+  }, []);
+
   /* ----------------------------- Actions -------------------------------- */
   const addItem = React.useCallback(
     (newItem: Omit<CartItem, "quantity">, qty = 1) => {
@@ -193,6 +209,10 @@ export function CartProvider({ children }: React.PropsWithChildren) {
     setItems([]);
     setCheckoutId("");
     try {
+      // Written now, not after the debounce: clearCart runs right after a
+      // successful payment, and a reload inside the 500 ms window used to
+      // bring the paid items back with the card form (payment audit F-08).
+      localStorage.setItem(STORAGE_KEY, "[]");
       localStorage.removeItem(CHECKOUT_ID_KEY);
     } catch (err) {
       console.error("Failed to clear the checkout id:", err);

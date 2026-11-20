@@ -28,6 +28,7 @@ import {
   clearPaymentAttempt,
   isWithinSettlingWindow,
   readPaymentAttempt,
+  SETTLING_WINDOW_MS,
   resolvePaymentAttempt,
   resolvePaymentAttemptWithRetries,
   writePaymentAttempt,
@@ -71,6 +72,9 @@ function calculateShipping(totalItems: number): number {
 /*                          Checkout Page Client                              */
 /* -------------------------------------------------------------------------- */
 
+/** Thrown after the page already reacted to a checkout response (409s). */
+class CheckoutHandledError extends Error {}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -88,16 +92,25 @@ const CONFIRM_POLLING_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_CHECKOUT_CONFIRM_POLLING === "true";
 
 /**
- * Backend error codes that mean "no money was taken, retrying is safe".
+ * Backend error codes that mean "no money was taken" (the backend's payment
+ * error contract). Safe to show and let the buyer act on: the backend now holds
+ * the per-order payment lock, so even a mistaken retry cannot charge twice.
  *
- * Anything else — any other 4xx, any 5xx, a transport failure with no status —
- * is treated as "the card may have been charged": the UI goes to verifying and
- * never re-offers the Pay button. See `submitPayment`.
+ * Anything else — PAYMENT_STATUS_UNKNOWN, any 5xx, a transport failure with no
+ * status — is treated as "the card may have been charged": the UI goes to
+ * verifying and never re-offers the Pay button. See `submitPayment`.
  */
 const NOT_CHARGED_ERROR_CODES = new Set([
+  "AMOUNT_MISMATCH",
+  "COUPON_EXHAUSTED",
   "INVALID_PAYMENT_TOKEN",
   "ORDER_EXPIRED",
+  "ORDER_NOT_PAYABLE",
+  "OUT_OF_STOCK",
   "PAYMENT_DECLINED",
+  "PAYMENT_REQUEST_REJECTED",
+  "UNAUTHENTICATED",
+  "VALIDATION_ERROR",
 ]);
 
 /** How long a mount-time recovery waits out a possibly-settling charge. */
@@ -121,8 +134,10 @@ type RecoveryState =
   | { attempt: PaymentAttempt; kind: "settling" }
   /** We could not reach the lookup. Never offer the form in this state. */
   | { attempt: PaymentAttempt; kind: "unknown" }
-  /** Confirmed unpaid and past the settling window — the form is safe. */
+  /** Confirmed unpaid by the backend — the form is safe. */
   | { attempt: PaymentAttempt; kind: "unpaid" }
+  /** The backend flagged the payment for staff review. Never offer the form. */
+  | { attempt: PaymentAttempt; kind: "review" }
   | { kind: "checking" }
   | { kind: "clear" };
 
@@ -412,10 +427,9 @@ export function CheckoutPageClient() {
       isRushOrder: rushAvailable ? data.isRushOrder || false : false,
       couponCode: appliedCoupon?.code || undefined,
       paymentMethod: "CARD",
-      // `checkoutId` deliberately stays out of this payload: the NestJS
-      // ValidationPipe runs with forbidNonWhitelisted, so an unknown field
-      // answers 400. It is persisted locally (see writePaymentAttempt) and
-      // starts going out once the backend contract accepts it.
+      // The cart's purchase-intent id: every tab and reload of this cart maps
+      // to ONE backend order, and a paid cart answers ORDER_ALREADY_PAID.
+      ...(checkoutId ? { checkoutId } : {}),
     };
 
     billingContactRef.current = {
@@ -434,10 +448,38 @@ export function CheckoutPageClient() {
     const payloadKey = JSON.stringify(payload);
     let currentOrder = order;
     if (!currentOrder || orderPayloadKeyRef.current !== payloadKey) {
-      currentOrder = await apiPost<CheckoutResponse>(
-        "/api/shop/checkout",
-        payload,
-      );
+      try {
+        currentOrder = await apiPost<CheckoutResponse>(
+          "/api/shop/checkout",
+          payload,
+        );
+      } catch (err: any) {
+        const body = err?.data ?? err?.response?._data;
+        // A cart that was already paid (another tab, a reload): show it,
+        // never charge it again.
+        if (body?.error === "ORDER_ALREADY_PAID") {
+          clearPaymentAttempt();
+          clearCart();
+          setAlreadyPaidOrder(body.orderNumber ?? null);
+          setStep("already-paid");
+          window.scrollTo({ behavior: "smooth", top: 0 });
+          throw new CheckoutHandledError();
+        }
+        // A payment for this cart is still being confirmed on the server.
+        if (body?.error === "PAYMENT_IN_PROGRESS" && body.orderId) {
+          writePaymentAttempt({
+            checkoutId,
+            orderId: body.orderId,
+            orderNumber: body.orderNumber ?? "",
+            startedAt: new Date().toISOString(),
+            total: 0,
+          });
+          setPayState("verifying");
+          void pollPaymentResult(body.orderId, body.orderNumber ?? "", 0);
+          throw new CheckoutHandledError();
+        }
+        throw err;
+      }
       checkoutPayloadRef.current = payload;
       orderPayloadKeyRef.current = payloadKey;
       setOrder(currentOrder);
@@ -477,7 +519,7 @@ export function CheckoutPageClient() {
       });
     } catch (err: any) {
       // Only order creation throws here — the payment helpers report their own
-      reportOrderCreationError(err);
+      if (!(err instanceof CheckoutHandledError)) reportOrderCreationError(err);
     } finally {
       payInFlightRef.current = false;
       // An unresolved payment switches to "verifying" and must survive this
@@ -525,7 +567,7 @@ export function CheckoutPageClient() {
         { canRecreateOrder: true },
       );
     } catch (err: any) {
-      reportOrderCreationError(err);
+      if (!(err instanceof CheckoutHandledError)) reportOrderCreationError(err);
     } finally {
       payInFlightRef.current = false;
       setPayState((s) => (s === "paying" ? "idle" : s));
@@ -560,19 +602,21 @@ export function CheckoutPageClient() {
   const pollPaymentResult = React.useCallback(
     async (orderId: string, orderNumber: string, total: number) => {
       const MAX_ATTEMPTS = 40;
+      const pollStartedAt = new Date().toISOString();
 
       for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
         await sleep(3000);
         if (pollCancelledRef.current) return;
 
         if (!CONFIRM_POLLING_ENABLED) {
-          const { order: recovered, outcome } = await resolvePaymentAttempt({
-            checkoutId,
-            orderId,
-            orderNumber,
-            startedAt: new Date().toISOString(),
-            total,
-          });
+          const { backendStatus, order: recovered, outcome } =
+            await resolvePaymentAttempt({
+              checkoutId,
+              orderId,
+              orderNumber,
+              startedAt: pollStartedAt,
+              total,
+            });
           if (pollCancelledRef.current) return;
 
           if (outcome === "paid") {
@@ -591,8 +635,31 @@ export function CheckoutPageClient() {
             );
             return;
           }
-          // "unpaid" is not final while a charge may still be settling, and
-          // "unknown" tells us nothing — keep looking either way.
+          if (
+            outcome === "unpaid" &&
+            !(
+              backendStatus === "PENDING" &&
+              Date.now() - Date.parse(pollStartedAt) < SETTLING_WINDOW_MS
+            )
+          ) {
+            // FAILED is the backend's definitive answer; PENDING ("never
+            // attempted") becomes final once the request can no longer be
+            // on its way. Either way nothing was taken.
+            clearPaymentAttempt();
+            setPayState("idle");
+            setPayError(
+              "Your payment didn't go through and you were not charged. You can try again.",
+            );
+            return;
+          }
+          if (outcome === "review") {
+            setPayState("idle");
+            setPayError(
+              `Your payment for order #${orderNumber} is being reviewed by our team. Please do not pay again — we'll contact you.`,
+            );
+            return;
+          }
+          // "processing" / "unknown" tell us nothing final — keep looking.
           continue;
         }
 
@@ -668,9 +735,22 @@ export function CheckoutPageClient() {
         return;
       }
       if (first.outcome === "gone") {
-        // The backend has no such order — nothing left to protect
+        // The backend has no such order for this customer — nothing to protect
         clearPaymentAttempt();
         setRecovery({ kind: "clear" });
+        return;
+      }
+      if (first.outcome === "review") {
+        setRecovery({ attempt, kind: "review" });
+        return;
+      }
+      if (
+        first.outcome === "unpaid" &&
+        !(first.backendStatus === "PENDING" && isWithinSettlingWindow(attempt))
+      ) {
+        // The backend's own word (payment attempts are locked server-side):
+        // nothing was charged and nothing is in flight. The form is safe.
+        setRecovery({ attempt, kind: "unpaid" });
         return;
       }
       if (first.outcome === "unknown") {
@@ -680,14 +760,8 @@ export function CheckoutPageClient() {
         return;
       }
 
-      // Unpaid. If /pay went out moments ago the backend may still be charging
-      // — it has no lock yet — so showing the form here is how a second payment
-      // on the same order happens. Wait the charge out first.
-      if (!isWithinSettlingWindow(attempt)) {
-        setRecovery({ attempt, kind: "unpaid" });
-        return;
-      }
-
+      // "processing" — or "never attempted" moments after /pay went out (the
+      // request may still be on its way): a charge may land. Wait it out.
       setRecovery({ attempt, kind: "settling" });
       const deadline = Date.now() + SETTLING_POLL_WINDOW_MS;
       while (!isCancelled() && Date.now() < deadline) {
@@ -709,13 +783,22 @@ export function CheckoutPageClient() {
           setRecovery({ kind: "clear" });
           return;
         }
-        // "unpaid" / "unknown" — keep waiting out the window
+        if (
+          next.outcome === "unpaid" &&
+          !(next.backendStatus === "PENDING" && isWithinSettlingWindow(attempt))
+        ) {
+          setRecovery({ attempt, kind: "unpaid" });
+          return;
+        }
+        if (next.outcome === "review") {
+          setRecovery({ attempt, kind: "review" });
+          return;
+        }
+        // "processing" / "unknown" — keep waiting out the window
       }
 
-      // Still unpaid after the window: the charge is not coming. The record
-      // stays, and the backend reuses this PENDING_PAYMENT order for an
-      // unchanged cart, so the retry lands on it rather than on a new one.
-      if (!isCancelled()) setRecovery({ attempt, kind: "unpaid" });
+      // Still unresolved: never a form. The record stays for the next visit.
+      if (!isCancelled()) setRecovery({ attempt, kind: "unknown" });
     },
     [handlePaymentSuccess],
   );
@@ -878,6 +961,28 @@ export function CheckoutPageClient() {
               return;
             }
           }
+        }
+
+        // No-money-moved codes that need a specific next step.
+        if (errorCode === "UNAUTHENTICATED") {
+          setPayError(
+            "Your session expired, so the payment was not sent. Please log in again — you were not charged.",
+          );
+          return;
+        }
+        if (
+          errorCode === "ORDER_NOT_PAYABLE" ||
+          errorCode === "AMOUNT_MISMATCH"
+        ) {
+          // The order must be prepared again; the next Pay re-runs checkout.
+          setOrder(null);
+          orderPayloadKeyRef.current = null;
+          setPayError(
+            typeof body?.message === "string" && body.message
+              ? `${body.message} You were not charged.`
+              : "Your checkout needs to be refreshed. You were not charged — please try again.",
+          );
+          return;
         }
 
         // Everything that reaches here is a payment whose outcome we do not
@@ -1052,6 +1157,29 @@ export function CheckoutPageClient() {
               </span>
               . We&apos;re checking whether it went through — this takes a few
               seconds. Please don&apos;t close this page or pay again.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (recovery.kind === "review") {
+    return (
+      <div className="container mx-auto max-w-7xl px-4 py-16 md:px-6">
+        <Card className="mx-auto max-w-lg">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <CreditCard className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <CardTitle className="text-2xl">Your payment is being reviewed</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-muted-foreground">
+              Order{" "}
+              <span className="font-medium">#{recovery.attempt.orderNumber}</span>{" "}
+              needs a quick check by our team before it is confirmed. Please
+              don&apos;t pay again — we&apos;ll contact you shortly.
             </p>
           </CardContent>
         </Card>
@@ -1391,13 +1519,15 @@ export function CheckoutPageClient() {
                   key={item.id}
                 >
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-muted">
-                    <Image
-                      alt={item.name}
-                      className="object-cover"
-                      fill
-                      sizes="64px"
-                      src={item.image}
-                    />
+                    {item.image ? (
+                      <Image
+                        alt={item.name}
+                        className="object-cover"
+                        fill
+                        sizes="64px"
+                        src={item.image}
+                      />
+                    ) : null}
                   </div>
                   <div className="flex flex-1 flex-col justify-between">
                     <p className="line-clamp-2 text-sm font-medium">

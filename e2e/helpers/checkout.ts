@@ -172,6 +172,18 @@ export class CheckoutLog {
     await Promise.all(this.pending);
   }
 
+  /**
+   * Read-only reconciliation lookups: the authenticated payment-status
+   * endpoint (current) or the public order lookup (legacy).
+   */
+  statusLookups(): CheckoutCall[] {
+    return this.calls.filter(
+      (c) =>
+        c.method === "GET" &&
+        (c.endpoint === "order-lookup" || c.endpoint.startsWith("payment-status")),
+    );
+  }
+
   of(endpoint: string, method = "POST"): CheckoutCall[] {
     return this.calls.filter(
       (c) => c.endpoint === endpoint && c.method === method,
@@ -515,3 +527,6 @@ export async function reportOrder(
 }
 
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** The backend payment-status endpoint the checkout reconciles through. */
+export const PAYMENT_STATUS_ROUTE = "**/api/shop/checkout/payment-status/**";
