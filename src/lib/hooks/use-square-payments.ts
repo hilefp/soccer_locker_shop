@@ -62,38 +62,13 @@ interface SquareCard {
   tokenize(): Promise<SquareTokenResult>;
 }
 
-interface SquarePaymentRequestOptions {
-  countryCode: string;
-  currencyCode: string;
-  total: { amount: string; label: string };
-}
-
-interface SquarePaymentRequest {
-  update(options: Partial<SquarePaymentRequestOptions>): boolean;
-}
-
-/** Apple Pay / Google Pay — both tokenize to the same single-use sourceId. */
-interface SquareWallet {
-  destroy(): Promise<void>;
-  tokenize(): Promise<SquareTokenResult>;
-}
-
-interface SquareGooglePay extends SquareWallet {
-  attach(selector: string, options?: Record<string, unknown>): Promise<void>;
-}
-
 interface SquarePayments {
-  applePay(paymentRequest: SquarePaymentRequest): Promise<SquareWallet>;
   card(): Promise<SquareCard>;
-  googlePay(paymentRequest: SquarePaymentRequest): Promise<SquareGooglePay>;
-  paymentRequest(options: SquarePaymentRequestOptions): SquarePaymentRequest;
   verifyBuyer(
     sourceToken: string,
     details: SquareVerifyBuyerDetails,
   ): Promise<null | SquareVerifyBuyerResult>;
 }
-
-export type SquareWalletKind = "applePay" | "googlePay";
 
 interface SquareVerifyBuyerDetails {
   amount: string;
@@ -134,10 +109,6 @@ interface UseSquarePaymentsOptions {
   containerId?: string;
   /** Mounts the card element only while true; tears it down when false. */
   enabled: boolean;
-  /** DOM id of the element the Google Pay button attaches to. */
-  googlePayContainerId?: string;
-  /** Order total shown in the Apple Pay / Google Pay sheets. */
-  total: number;
 }
 
 /**
@@ -148,24 +119,15 @@ interface UseSquarePaymentsOptions {
 export function useSquarePayments({
   containerId = "card-container",
   enabled,
-  googlePayContainerId = "google-pay-button",
-  total,
 }: UseSquarePaymentsOptions) {
   const [status, setStatus] = React.useState<SquarePaymentsStatus>("idle");
   // True once the card number is recognized (a brand was detected) — the
   // closest signal the SDK gives that the buyer actually entered a card
   const [cardEntered, setCardEntered] = React.useState(false);
   const [cardHasError, setCardHasError] = React.useState(false);
-  const [applePayReady, setApplePayReady] = React.useState(false);
-  const [googlePayReady, setGooglePayReady] = React.useState(false);
   const paymentsRef = React.useRef<null | SquarePayments>(null);
   const cardRef = React.useRef<null | SquareCard>(null);
   const detachListenersRef = React.useRef<(() => void) | null>(null);
-  const applePayRef = React.useRef<null | SquareWallet>(null);
-  const googlePayRef = React.useRef<null | SquareGooglePay>(null);
-  const paymentRequestsRef = React.useRef<SquarePaymentRequest[]>([]);
-  const totalRef = React.useRef(total);
-  totalRef.current = total;
 
   React.useEffect(() => {
     if (!enabled) return;
@@ -223,50 +185,6 @@ export function useSquarePayments({
         cardRef.current = card;
         setStatus("ready");
 
-        // Wallets are optional extras: each one fails independently on
-        // unsupported browsers (Apple Pay outside Safari, Google Pay outside
-        // Chrome/Android) or unregistered domains, and its button stays hidden
-        const buildPaymentRequest = () =>
-          payments.paymentRequest({
-            countryCode: "US",
-            currencyCode: "USD",
-            total: { amount: totalRef.current.toFixed(2), label: "Soccer Locker" },
-          });
-
-        try {
-          const applePayRequest = buildPaymentRequest();
-          const applePay = await payments.applePay(applePayRequest);
-          if (cancelled) {
-            void applePay.destroy();
-          } else {
-            applePayRef.current = applePay;
-            paymentRequestsRef.current.push(applePayRequest);
-            setApplePayReady(true);
-          }
-        } catch {
-          // Apple Pay unavailable — hidden
-        }
-
-        try {
-          const googlePayRequest = buildPaymentRequest();
-          const googlePay = await payments.googlePay(googlePayRequest);
-          if (cancelled) {
-            void googlePay.destroy();
-          } else {
-            await googlePay.attach(`#${googlePayContainerId}`, {
-              buttonSizeMode: "fill",
-            });
-            if (cancelled) {
-              void googlePay.destroy();
-            } else {
-              googlePayRef.current = googlePay;
-              paymentRequestsRef.current.push(googlePayRequest);
-              setGooglePayReady(true);
-            }
-          }
-        } catch {
-          // Google Pay unavailable — hidden
-        }
       } catch (err) {
         if (cancelled) return;
         console.error("Square payments init error:", err);
@@ -284,33 +202,12 @@ export function useSquarePayments({
         void cardRef.current.destroy();
         cardRef.current = null;
       }
-      if (applePayRef.current) {
-        void applePayRef.current.destroy();
-        applePayRef.current = null;
-      }
-      if (googlePayRef.current) {
-        void googlePayRef.current.destroy();
-        googlePayRef.current = null;
-      }
-      paymentRequestsRef.current = [];
       paymentsRef.current = null;
       setStatus("idle");
       setCardEntered(false);
       setCardHasError(false);
-      setApplePayReady(false);
-      setGooglePayReady(false);
     };
-  }, [enabled, containerId, googlePayContainerId]);
-
-  // Keep the amount in the wallet sheets in sync when the order total changes
-  // (rush toggle, coupon) without remounting the payment elements
-  React.useEffect(() => {
-    for (const request of paymentRequestsRef.current) {
-      request.update({
-        total: { amount: total.toFixed(2), label: "Soccer Locker" },
-      });
-    }
-  }, [total]);
+  }, [enabled, containerId]);
 
   /** Tokenizes the card currently entered in the iframe. Tokens are single-use. */
   const tokenize = React.useCallback(async (): Promise<SquareTokenResult> => {
@@ -319,26 +216,6 @@ export function useSquarePayments({
     }
     return cardRef.current.tokenize();
   }, []);
-
-  /**
-   * Opens the Apple Pay / Google Pay sheet and tokenizes. Must be the first
-   * await in the click handler — Apple Pay refuses to open outside the
-   * user-gesture call chain.
-   */
-  const walletTokenize = React.useCallback(
-    async (wallet: SquareWalletKind): Promise<SquareTokenResult> => {
-      const instance =
-        wallet === "applePay" ? applePayRef.current : googlePayRef.current;
-      if (!instance) {
-        return {
-          errors: [{ message: "This payment method is not available." }],
-          status: "ERROR",
-        };
-      }
-      return instance.tokenize();
-    },
-    [],
-  );
 
   /** Runs SCA/3DS buyer verification; returns the verification token (or null). */
   const verifyBuyer = React.useCallback(
@@ -360,14 +237,11 @@ export function useSquarePayments({
   );
 
   return {
-    applePayReady,
     cardEntered,
     cardHasError,
-    googlePayReady,
     status,
     tokenize,
     verifyBuyer,
-    walletTokenize,
   };
 }
 

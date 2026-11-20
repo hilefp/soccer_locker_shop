@@ -39,7 +39,6 @@ import { useCart } from "~/lib/hooks/use-cart";
 import {
   useSquarePayments,
   type SquareBillingContact,
-  type SquareWalletKind,
 } from "~/lib/hooks/use-square-payments";
 import { getOrderStatusLabel } from "~/lib/utils/order-status";
 import {
@@ -260,14 +259,11 @@ export function CheckoutPageClient() {
   const total = subtotal + tax + shippingCost + rushFee;
 
   const {
-    applePayReady,
     cardEntered,
     cardHasError,
-    googlePayReady,
     status: squareStatus,
     tokenize,
     verifyBuyer,
-    walletTokenize,
   } = useSquarePayments({
     // Never mount the card element while a saved attempt is unresolved: an
     // empty card form is an invitation to pay twice.
@@ -276,7 +272,6 @@ export function CheckoutPageClient() {
       !cartSyncing &&
       items.length > 0 &&
       (recovery.kind === "clear" || recovery.kind === "unpaid"),
-    total,
   });
 
   /* ---------------------- Coupon validation ----------------------------- */
@@ -523,53 +518,6 @@ export function CheckoutPageClient() {
     } finally {
       payInFlightRef.current = false;
       // An unresolved payment switches to "verifying" and must survive this
-      setPayState((s) => (s === "paying" ? "idle" : s));
-    }
-  };
-
-  /* ---------------------- Wallet payment (Apple Pay / Google Pay) --------- */
-  const handleWalletPay = async (wallet: SquareWalletKind) => {
-    if (payInFlightRef.current) return;
-    if (payState !== "idle" || cartSyncing) return;
-    // Sync-only validation: any await before tokenize would break the
-    // user-gesture call chain Apple Pay requires to open its sheet
-    const parsed = checkoutSchema.safeParse(getValues());
-    if (!parsed.success) {
-      toast.error("Please complete your shipping details first.");
-      void handleSubmit(() => undefined)(); // surfaces the field errors
-      return;
-    }
-
-    // Claimed only once nothing else can bail out before the try/finally
-    payInFlightRef.current = true;
-    setPayError(null);
-    setPayState("paying");
-    try {
-      const tokenResult = await walletTokenize(wallet);
-      if (tokenResult.status === "Cancel") return; // buyer closed the sheet
-      if (tokenResult.status !== "OK" || !tokenResult.token) {
-        const messages = tokenResult.errors
-          ?.map((e) => e.message ?? e.detail)
-          .filter(Boolean)
-          .join(" ");
-        setPayError(
-          messages || "The payment could not be started. Please try again.",
-        );
-        return;
-      }
-
-      const currentOrder = await ensureOrder(parsed.data);
-      // No verifyBuyer for wallets: Apple/Google already authenticate the
-      // buyer strongly (Face ID / fingerprint), so /pay goes without it
-      await submitPayment(
-        currentOrder,
-        { sourceId: tokenResult.token },
-        { canRecreateOrder: true },
-      );
-    } catch (err: any) {
-      if (!(err instanceof CheckoutHandledError)) reportOrderCreationError(err);
-    } finally {
-      payInFlightRef.current = false;
       setPayState((s) => (s === "paying" ? "idle" : s));
     }
   };
@@ -846,8 +794,7 @@ export function CheckoutPageClient() {
       source: PaySource,
       opts: {
         canRecreateOrder: boolean;
-        // Card payments can silently rebuild a fresh token; wallets can't
-        // (re-opening the Apple/Google sheet needs a new user gesture)
+        // Rebuilds a fresh card token (tokens are single-use)
         rebuildSource?: (order: CheckoutResponse) => Promise<null | PaySource>;
       },
     ): Promise<void> => {
@@ -1690,7 +1637,7 @@ export function CheckoutPageClient() {
           </Card>
         </div>
 
-        {/* Payment — embedded Square card + wallets. Stacks last on mobile
+        {/* Payment — embedded Square card (card only). Stacks last on mobile
             (below the coupon); sits under the form on desktop */}
         <div className="mt-6 lg:col-span-2 lg:col-start-1 lg:mt-0">
           <Card>
@@ -1701,50 +1648,6 @@ export function CheckoutPageClient() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Express checkout — Apple Pay (Safari) / Google Pay (Chrome).
-                  The Google Pay container must stay in the DOM for the SDK to
-                  attach, so it's hidden rather than unmounted */}
-              <div
-                className={
-                  applePayReady || googlePayReady ? "grid gap-2" : "hidden"
-                }
-              >
-                {applePayReady && (
-                  <button
-                    aria-label="Pay with Apple Pay"
-                    className="h-12 w-full rounded-md disabled:opacity-50"
-                    disabled={payInFlight}
-                    onClick={() => void handleWalletPay("applePay")}
-                    style={
-                      {
-                        WebkitAppearance: "-apple-pay-button",
-                      } as React.CSSProperties
-                    }
-                    type="button"
-                  />
-                )}
-                <div
-                  aria-disabled={payInFlight}
-                  className={googlePayReady ? "h-12 w-full" : "hidden"}
-                  id="google-pay-button"
-                  onClick={
-                    payInFlight
-                      ? undefined
-                      : () => void handleWalletPay("googlePay")
-                  }
-                />
-              </div>
-
-              {(applePayReady || googlePayReady) && (
-                <div className="flex items-center gap-3">
-                  <Separator className="flex-1" />
-                  <span className="text-xs text-muted-foreground">
-                    or pay with card
-                  </span>
-                  <Separator className="flex-1" />
-                </div>
-              )}
-
               {/* Square's card iframe mounts here — card data never touches our code */}
               <div className="relative rounded-md">
                 <div id="card-container" className="min-h-22.5" />
