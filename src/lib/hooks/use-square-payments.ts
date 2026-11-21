@@ -64,6 +64,7 @@ interface SquareCard {
 
 interface SquarePayments {
   card(): Promise<SquareCard>;
+  setLocale(locale: string): Promise<void>;
   verifyBuyer(
     sourceToken: string,
     details: SquareVerifyBuyerDetails,
@@ -157,6 +158,9 @@ export function useSquarePayments({
           config.applicationId,
           config.locationId,
         );
+        // The SDK defaults to the browser's locale; the shop is English-only,
+        // so pin the card fields (placeholders, errors) to English
+        await payments.setLocale("en-US");
         const card = await payments.card();
         if (cancelled) {
           void card.destroy();
