@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 import { SEO_CONFIG, SYSTEM_CONFIG } from "~/app";
@@ -16,6 +16,7 @@ import { registerSchema } from "~/lib/validations/auth";
 import type { RegisterFormData } from "~/lib/validations/auth";
 import { Button } from "~/ui/primitives/button";
 import { Card, CardContent } from "~/ui/primitives/card";
+import { Checkbox } from "~/ui/primitives/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +37,7 @@ export function RegisterPageClient() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
@@ -43,7 +45,7 @@ export function RegisterPageClient() {
     getValues,
   } = useForm<RegisterFormData>({
     defaultValues: {
-      newsletter: false,
+      newsletter: true,
     },
     resolver: zodResolver(registerSchema),
   });
@@ -350,6 +352,29 @@ export function RegisterPageClient() {
                           {...register("postalCode")}
                         />
                       </div>
+                    </div>
+                    <div className="flex items-start gap-3 pt-2">
+                      <Controller
+                        control={control}
+                        name="newsletter"
+                        render={({ field }) => (
+                          <Checkbox
+                            checked={field.value}
+                            className="mt-0.5"
+                            id="newsletter"
+                            onCheckedChange={(checked) =>
+                              field.onChange(checked === true)
+                            }
+                          />
+                        )}
+                      />
+                      <Label
+                        className="leading-snug font-normal"
+                        htmlFor="newsletter"
+                      >
+                        Email me about sales, new products and team offers.
+                        You can unsubscribe at any time.
+                      </Label>
                     </div>
                   </>
                 )}
